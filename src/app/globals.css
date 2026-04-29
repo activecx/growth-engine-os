@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --orange: #F97316;
+  --pink: #EC4899;
+  --purple: #8B5CF6;
+  --near-black: #0A0008;
+  --white: #FFFFFF;
+  --surface: #FFF5F5;
+  --gray: #6B7280;
+  --border: #E5E7EB;
+  --gradient: linear-gradient(135deg, #F97316 0%, #EC4899 50%, #8B5CF6 100%);
+}
+
+@theme inline {
+  --color-background: var(--near-black);
+  --color-foreground: var(--white);
+  --font-sans: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --color-orange: var(--orange);
+  --color-pink: var(--pink);
+  --color-purple: var(--purple);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-gray: var(--gray);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--near-black);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
