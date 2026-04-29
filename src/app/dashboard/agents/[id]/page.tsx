@@ -3,6 +3,12 @@
 import { useParams } from "next/navigation";
 import { agents, departments, type Agent } from "@/lib/agents";
 import Link from "next/link";
+import { useState, useCallback, useRef, useEffect } from "react";
+
+interface ChatMessage {
+  role: "user" | "model";
+  text: string;
+}
 
 function getStatusColor(status: Agent["status"]) {
   switch (status) {
@@ -32,9 +38,69 @@ function getExperienceBadge(exp: Agent["experience"]) {
   }
 }
 
+const QUICK_PROMPTS = [
+  "What's your current status?",
+  "Give me a quick report",
+  "What should we focus on this week?",
+  "Any blockers or risks?",
+];
+
 export default function AgentDetailPage() {
   const params = useParams();
   const agent = agents.find((a) => a.id === params.id);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || !agent) return;
+      setIsLoading(true);
+      const userMsg: ChatMessage = { role: "user", text };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+
+      try {
+        const res = await fetch("/api/agents/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agentId: agent.id,
+            message: text,
+            history: [...messages, userMsg],
+          }),
+        });
+        const data = await res.json();
+        if (data.response) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "model", text: data.response },
+          ]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { role: "model", text: "❌ Error: " + (data.error || "No response") },
+          ]);
+        }
+      } catch (err) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "model", text: "❌ Network error. Please try again." },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [agent, messages]
+  );
 
   if (!agent) {
     return (
@@ -67,7 +133,7 @@ export default function AgentDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-[1000px] mx-auto px-8 py-10">
+      <main className="max-w-[1200px] mx-auto px-8 py-10">
         {/* Profile Header */}
         <div className="flex items-start gap-6 mb-10">
           <div
@@ -106,10 +172,9 @@ export default function AgentDetailPage() {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left Column - Profile (3 cols) */}
+          <div className="lg:col-span-3 space-y-6">
             {/* Job Description */}
             <div className="rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6">
               <h2 className="font-[family-name:var(--font-poppins)] font-bold text-lg mb-4">Job Description</h2>
@@ -164,8 +229,101 @@ export default function AgentDetailPage() {
             )}
           </div>
 
-          {/* Right Column - Stats & Actions */}
-          <div className="space-y-6">
+          {/* Right Column - Chat (2 cols) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Chat Panel */}
+            <div className="rounded-2xl border border-white/[0.09] bg-white/[0.04] flex flex-col" style={{ height: showChat ? "560px" : "auto" }}>
+              <div className="p-5 border-b border-white/[0.07] flex items-center justify-between">
+                <div>
+                  <h2 className="font-[family-name:var(--font-poppins)] font-bold text-lg">Message {agent.name}</h2>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    {messages.length === 0 ? "Start a conversation" : `${messages.length} message${messages.length !== 1 ? "s" : ""}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowChat(!showChat)}
+                  className="text-xs text-white/40 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]"
+                >
+                  {showChat ? "Minimize" : "Open Chat"}
+                </button>
+              </div>
+
+              {showChat && (
+                <>
+                  <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+                    {messages.length === 0 && (
+                      <div className="space-y-3">
+                        <div className="text-sm text-white/40 text-center py-4">
+                          👋 {agent.name} is ready. What would you like to know?
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {QUICK_PROMPTS.map((prompt) => (
+                            <button
+                              key={prompt}
+                              onClick={() => sendMessage(prompt)}
+                              disabled={isLoading}
+                              className="text-left px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white/60 hover:bg-white/[0.08] hover:border-orange-500/30 hover:text-white/80 transition-all disabled:opacity-50"
+                            >
+                              {prompt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                            msg.role === "user"
+                              ? "bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/20 text-white/90 rounded-br-md"
+                              : "bg-white/[0.05] border border-white/[0.08] text-white/70 rounded-bl-md"
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white/40 text-sm rounded-bl-md">
+                          <span className="inline-flex gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 border-t border-white/[0.07]">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !isLoading && sendMessage(input)}
+                        placeholder={`Ask ${agent.name} anything...`}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-orange-500/40 transition-colors"
+                      />
+                      <button
+                        onClick={() => sendMessage(input)}
+                        disabled={isLoading || !input.trim()}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* KPI Card */}
             <div className="rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6">
               <h2 className="font-[family-name:var(--font-poppins)] font-bold text-lg mb-4">KPIs</h2>
@@ -196,8 +354,11 @@ export default function AgentDetailPage() {
             <div className="rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6">
               <h2 className="font-[family-name:var(--font-poppins)] font-bold text-lg mb-4">Actions</h2>
               <div className="space-y-2">
-                <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] text-white font-semibold text-sm hover:opacity-90 transition-opacity">
-                  Send Message
+                <button
+                  onClick={() => setShowChat(true)}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+                >
+                  Open Chat
                 </button>
                 <button className="w-full py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white/70 font-semibold text-sm hover:bg-white/[0.08] transition-colors">
                   Assign Task
@@ -217,26 +378,30 @@ export default function AgentDetailPage() {
               </div>
             </div>
 
-            {/* Daily Agenda Placeholder */}
+            {/* Daily Agenda */}
             <div className="rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6">
               <h2 className="font-[family-name:var(--font-poppins)] font-bold text-lg mb-4">Daily Agenda</h2>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03]">
-                  <span className="text-xs text-white/30 font-mono">09:00</span>
-                  <span className="text-sm text-white/50">System health check</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03]">
-                  <span className="text-xs text-white/30 font-mono">10:00</span>
-                  <span className="text-sm text-white/50">Review agent queue</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03]">
-                  <span className="text-xs text-white/30 font-mono">14:00</span>
-                  <span className="text-sm text-white/50">Cross-agent sync</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03]">
-                  <span className="text-xs text-white/30 font-mono">16:00</span>
-                  <span className="text-sm text-white/50">Daily summary prep</span>
-                </div>
+                {[
+                  { time: "09:00", task: "System health check", status: "done" as const },
+                  { time: "10:00", task: "Review agent queue", status: "active" as const },
+                  { time: "14:00", task: "Cross-agent sync", status: "pending" as const },
+                  { time: "16:00", task: "Daily summary prep", status: "pending" as const },
+                ].map((item) => (
+                  <div key={item.time} className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03]">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      item.status === "done" ? "bg-emerald-400" :
+                      item.status === "active" ? "bg-orange-400 animate-pulse" :
+                      "bg-white/20"
+                    }`} />
+                    <span className="text-xs text-white/30 font-mono w-10">{item.time}</span>
+                    <span className={`text-sm ${
+                      item.status === "done" ? "text-white/40 line-through" :
+                      item.status === "active" ? "text-white/80" :
+                      "text-white/50"
+                    }`}>{item.task}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
