@@ -4,6 +4,9 @@ import { getAgentPrompt } from "@/lib/prompts/agents";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
 interface ChatMessage {
   role: "user" | "model";
   text: string;
@@ -13,6 +16,15 @@ interface ChatRequest {
   agentId: string;
   message: string;
   history?: ChatMessage[];
+}
+
+type LLMProvider = "openrouter" | "gemini" | "mock";
+
+// Detect which provider to use
+function getProvider(): LLMProvider {
+  if (OPENROUTER_API_KEY && OPENROUTER_API_KEY.length > 10) return "openrouter";
+  if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) return "gemini";
+  return "mock";
 }
 
 // Mock responses for when no API key is configured
@@ -186,7 +198,50 @@ Based on the current system state, here's what I recommend:
 - Generate a specific deliverable (report, copy, design spec)?
 - Escalate to Karim for cross-agent coordination?
 
-*(Note: To get real AI-powered responses, add your GEMINI_API_KEY to .env.local)*`;
+*(Note: To get real AI-powered responses, add your GEMINI_API_KEY or OPENROUTER_API_KEY to .env.local)*`;
+}
+
+async function callOpenRouter(
+  systemPrompt: string,
+  message: string,
+  history: ChatMessage[]
+): Promise<string> {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY not configured");
+  }
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.map((msg) => ({
+      role: msg.role === "user" ? "user" : "assistant",
+      content: msg.text,
+    })),
+    { role: "user", content: message },
+  ];
+
+  const response = await fetch(OPENROUTER_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://growth-engine-os.vercel.app",
+      "X-Title": "TopK Agent OS",
+    },
+    body: JSON.stringify({
+      model: "openrouter/auto",
+      messages,
+      temperature: 0.4,
+      max_tokens: 1000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "No response generated.";
 }
 
 async function callGemini(
@@ -198,9 +253,7 @@ async function callGemini(
     throw new Error("GEMINI_API_KEY not configured");
   }
 
-  // Build conversation history for Gemini
   const contents = [
-    // System instruction as the first user message with special formatting
     {
       role: "user",
       parts: [{ text: `SYSTEM INSTRUCTION (stay in character):\n${systemPrompt}\n\nAcknowledge you understand your role with a brief "Ready."` }],
@@ -268,11 +321,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const provider = getProvider();
     let responseText: string;
-    let source: "gemini" | "mock" = "mock";
+    let source: LLMProvider = "mock";
 
-    // Try Gemini first, fall back to mock
-    if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
+    if (provider === "openrouter") {
+      try {
+        responseText = await callOpenRouter(prompt.systemPrompt, message, history);
+        source = "openrouter";
+      } catch (err) {
+        console.warn("OpenRouter call failed, trying Gemini:", err);
+        if (GEMINI_API_KEY) {
+          try {
+            responseText = await callGemini(prompt.systemPrompt, message, history);
+            source = "gemini";
+          } catch (geminiErr) {
+            console.warn("Gemini fallback also failed:", geminiErr);
+            responseText = generateMockResponse(agentId, message);
+          }
+        } else {
+          responseText = generateMockResponse(agentId, message);
+        }
+      }
+    } else if (provider === "gemini") {
       try {
         responseText = await callGemini(prompt.systemPrompt, message, history);
         source = "gemini";
