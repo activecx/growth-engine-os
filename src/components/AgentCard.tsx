@@ -22,7 +22,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
   const isDirector = agent.reportsTo === null && agent.department !== "leadership";
 
   return (
-    <Link href={`/agents/${agent.id}`} className="group relative rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6 transition-all duration-200 hover:bg-[rgba(139,92,246,0.08)] hover:border-purple-500/30 hover:-translate-y-1 block">
+    <Link href={`/dashboard/agents/${agent.id}`} className="group relative rounded-2xl border border-white/[0.09] bg-white/[0.04] p-6 transition-all duration-200 hover:bg-[rgba(139,92,246,0.08)] hover:border-purple-500/30 hover:-translate-y-1 block">
       {/* Status indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full ${status.dot} shadow-[0_0_8px_rgba(0,0,0,0.3)]`} />

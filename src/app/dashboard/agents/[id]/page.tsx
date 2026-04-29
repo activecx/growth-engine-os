@@ -41,7 +41,7 @@ export default function AgentDetailPage() {
       <div className="min-h-screen bg-[#0A0008] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="font-[family-name:var(--font-poppins)] font-bold text-2xl mb-4">Agent not found</h1>
-          <Link href="/" className="text-orange-400 hover:text-orange-300">← Back to Command Center</Link>
+          <Link href="/dashboard" className="text-orange-400 hover:text-orange-300">← Back to Command Center</Link>
         </div>
       </div>
     );
@@ -58,7 +58,7 @@ export default function AgentDetailPage() {
       <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#0A0008]/90 backdrop-blur-xl">
         <div className="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-white/40 hover:text-white transition-colors text-sm">← Command Center</Link>
+            <Link href="/dashboard" className="text-white/40 hover:text-white transition-colors text-sm">← Command Center</Link>
             <span className="text-white/20">|</span>
             <div className="font-[family-name:var(--font-poppins)] font-extrabold text-lg">
               TopK <span className="bg-gradient-to-r from-[#F97316] via-[#EC4899] to-[#8B5CF6] bg-clip-text text-transparent">Agent OS</span>

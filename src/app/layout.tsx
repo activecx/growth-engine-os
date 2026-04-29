@@ -15,8 +15,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TopK Agent OS — Command Center",
-  description: "AI workforce dashboard for TopK AI Agency",
+  title: "TopK Agent OS — AI Growth Engine",
+  description: "AI-powered marketing and lead generation operating system for high-ticket service businesses. 11 AI agents. 7 core layers. 90 days to deployment.",
 };
 
 export default function RootLayout({
