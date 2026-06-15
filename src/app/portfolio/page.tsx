@@ -15,13 +15,14 @@ const PLAYABLE = [
   { src: "/topk/portfolio/layla-jewelry.mp4", brand: "Layla", niche: "Jewelry · AI Brand Film" },
   { src: "/topk/portfolio/gshock.mp4", brand: "G-Shock", niche: "Watches · Product Ad" },
   { src: "/topk/portfolio/maretti-product.mp4", brand: "Maretti", niche: "F&B · Product Motion" },
+  { src: "/topk/portfolio/blackwolf.mp4", brand: "Black Wolf", niche: "Pets · Brand Ad" },
+  { src: "/topk/portfolio/adidas.mp4", brand: "Adidas", niche: "Sportswear · Concept Spot" },
+  { src: "/topk/portfolio/signal.mp4", brand: "Signal from Tomorrow", niche: "Cinematic · Music Video" },
 ];
 
 const CLIENTS = [
   { brand: "Sinour", niche: "Fragrance · Client (Nixoria, Sivanor, Grandeur)", icon: "flame" },
   { brand: "Askim", niche: "Cosmetics · Client Campaign", icon: "sparkles" },
-  { brand: "Adidas", niche: "Sportswear · Concept Spot", icon: "trophy" },
-  { brand: "Black Wolf", niche: "Pets · Brand Ad", icon: "paw-print" },
   { brand: "Reyhana", niche: "AI Influencer · Original IP", icon: "user" },
   { brand: "Real / Fake", niche: "Viral Social · Hook Series", icon: "play-circle" },
 ];
