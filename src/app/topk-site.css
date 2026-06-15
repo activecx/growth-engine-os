@@ -222,6 +222,10 @@
   .type-icon i { width: 22px; height: 22px; color: #fff; stroke-width: 1.8; }
   .type-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; color: #fff; margin-bottom: 7px; }
   .type-desc { font-family: var(--font-body); font-size: 14px; color: rgba(255,255,255,0.46); line-height: 1.6; }
+  .type-link { display: block; text-decoration: none; cursor: pointer; }
+  .type-cta { margin-top: 14px; font-family: var(--font-head); font-size: 13px; font-weight: 600; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; width: fit-content; }
+  .back-link { display: inline-block; font-family: var(--font-head); font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: none; margin-bottom: 18px; transition: color .15s; }
+  .back-link:hover { color: #fff; }
 
   @media (max-width: 900px) {
     .hero2 { grid-template-columns: 1fr; padding: 110px 20px 50px; gap: 36px; }
