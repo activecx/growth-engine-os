@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import "./topk-site.css";
-import { CATEGORIES } from "./services-data";
+import { CATEGORIES, TOTAL_TYPES } from "./services-data";
 
 declare global {
   interface Window {
@@ -84,7 +84,7 @@ export default function Home() {
             <a className="btn-outline" href="#marketing-studio">Explore Video Types</a>
           </div>
           <div className="hero-stats">
-            <div><div className="stat-num">12</div><div className="stat-label">Video types</div></div>
+            <div><div className="stat-num">{TOTAL_TYPES}</div><div className="stat-label">Video formats</div></div>
             <div><div className="stat-num">3-5d</div><div className="stat-label">Turnaround</div></div>
             <div><div className="stat-num">∞</div><div className="stat-label">Revisions</div></div>
           </div>
@@ -95,27 +95,52 @@ export default function Home() {
       </div>
 
       {/* CATEGORIES */}
-      {CATEGORIES.map((cat, ci) => (
+      {CATEGORIES.map((cat, ci) => {
+        const feat = cat.types[0];
+        const count = Math.min(feat.examples.length, 4);
+        return (
         <section id={cat.id} key={cat.id} style={ci > 0 ? { borderTop: "1px solid var(--border)" } : undefined}>
           <div className="section-inner">
             <div className="reveal">
-              <div className="section-eyebrow"><i data-lucide={ci === 0 ? "clapperboard" : "smartphone"}></i>{cat.eyebrow}</div>
+              <div className="section-eyebrow"><i data-lucide={cat.icon}></i>{cat.eyebrow}</div>
               <h2 className="section-h2">{cat.name}</h2>
               <p className="section-sub">{cat.tagline}</p>
             </div>
-            <div className="types-grid">
-              {cat.types.map((t, i) => (
-                <Link href={`/services/${t.id}`} className={`type-card type-link reveal reveal-delay-${(i % 3) + 1}`} key={t.id}>
-                  <div className="type-icon"><i data-lucide={t.icon}></i></div>
-                  <div className="type-title">{t.name}</div>
-                  <div className="type-desc">{t.short}</div>
-                  <div className="type-cta">{t.examples.length > 0 ? `${t.examples.length} example${t.examples.length > 1 ? "s" : ""} →` : "View examples →"}</div>
-                </Link>
-              ))}
-            </div>
+
+            {cat.layout === "grid" ? (
+              <div className="types-grid">
+                {cat.types.map((t, i) => (
+                  <Link href={`/services/${t.id}`} className={`type-card type-link reveal reveal-delay-${(i % 3) + 1}`} key={t.id}>
+                    <div className="type-icon"><i data-lucide={t.icon}></i></div>
+                    <div className="type-title">{t.name}</div>
+                    <div className="type-desc">{t.short}</div>
+                    <div className="type-cta">{t.examples.length > 0 ? `${t.examples.length} example${t.examples.length > 1 ? "s" : ""} →` : "View examples →"}</div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="feature-row">
+                <div className="reveal-left">
+                  <p className="feature-long">{feat.long}</p>
+                  <Link href={`/services/${feat.id}`} className="btn-outline">Explore {cat.name} →</Link>
+                </div>
+                <div className="reveal-right">
+                  {count > 0 ? (
+                    <div className={`feature-media-grid count-${count}`}>
+                      {feat.examples.slice(0, 4).map((ex) => (
+                        <video key={ex.src} src={ex.src} controls muted playsInline preload="metadata" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="feature-empty"><i data-lucide={feat.icon}></i><span>Examples coming soon</span></div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </section>
-      ))}
+      );
+      })}
 
       {/* HOW IT WORKS */}
       <section id="how" className="how-section">
@@ -175,10 +200,12 @@ export default function Home() {
                 ))}
               </div>
               <div className="footer-col">
-                <div className="footer-col-title">Social</div>
-                {CATEGORIES[1].types.map((t) => (
-                  <Link href={`/services/${t.id}`} key={t.id}>{t.name}</Link>
-                ))}
+                <div className="footer-col-title">More Video</div>
+                <Link href="/services/brand-films">Cinematic Films</Link>
+                <Link href="/services/product-ecommerce">E-commerce</Link>
+                <Link href="/services/social-hooks">Social Hooks</Link>
+                <Link href="/services/social-viral">Social Viral</Link>
+                <Link href="/services/hyper-real">Hyper-Real</Link>
                 <Link href="/portfolio">Portfolio</Link>
               </div>
             </div>

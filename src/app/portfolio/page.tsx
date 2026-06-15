@@ -12,16 +12,22 @@ declare global {
 }
 
 const PLAYABLE = [
-  { src: "/topk/portfolio/sinour-nixoria.mp4", brand: "Sinour — Nixoria", niche: "Fragrance · Client" },
-  { src: "/topk/portfolio/sinour-sivanor.mp4", brand: "Sinour — Sivanor", niche: "Fragrance · Client" },
-  { src: "/topk/portfolio/sinour-grandeur.mp4", brand: "Sinour — Grandeur", niche: "Fragrance · Client" },
-  { src: "/topk/portfolio/askim.mp4", brand: "Askim", niche: "Cosmetics · Client" },
-  { src: "/topk/portfolio/layla-jewelry.mp4", brand: "Layla", niche: "Jewelry · AI Brand Film" },
-  { src: "/topk/portfolio/gshock.mp4", brand: "G-Shock", niche: "Watches · Product Ad" },
-  { src: "/topk/portfolio/maretti-product.mp4", brand: "Maretti", niche: "F&B · Product Motion" },
-  { src: "/topk/portfolio/blackwolf.mp4", brand: "Black Wolf", niche: "Pets · Brand Ad" },
-  { src: "/topk/portfolio/adidas.mp4", brand: "Adidas", niche: "Sportswear · Concept Spot" },
-  { src: "/topk/portfolio/signal.mp4", brand: "Signal from Tomorrow", niche: "Cinematic · Music Video" },
+  { src: "/topk/portfolio/sinour-nixoria.mp4", brand: "Sinour — Nixoria", niche: "Fragrance · Brand Film" },
+  { src: "/topk/portfolio/sinour-sivanor.mp4", brand: "Sinour — Sivanor", niche: "Fragrance · Brand Film" },
+  { src: "/topk/portfolio/sinour-grandeur.mp4", brand: "Sinour — Grandeur", niche: "Fragrance · Brand Film" },
+  { src: "/topk/portfolio/askim.mp4", brand: "Askim", niche: "Cosmetics · E-commerce" },
+  { src: "/topk/portfolio/layla-jewelry.mp4", brand: "Layla", niche: "Jewelry · Brand Film" },
+  { src: "/topk/portfolio/jewelry.mp4", brand: "Jewelry", niche: "Accessories · Virtual Try-On" },
+  { src: "/topk/portfolio/gucci-floral.mp4", brand: "Floral Fragrance", niche: "Fragrance · Hyper Motion" },
+  { src: "/topk/portfolio/iphone.mp4", brand: "Tech Product", niche: "Electronics · Hyper Motion" },
+  { src: "/topk/portfolio/soda.mp4", brand: "Sparkling Soda", niche: "Beverage · E-commerce" },
+  { src: "/topk/portfolio/luna.mp4", brand: "Luna", niche: "Skincare · E-commerce" },
+  { src: "/topk/portfolio/adidas.mp4", brand: "Sportswear", niche: "Apparel · TV Spot" },
+  { src: "/topk/portfolio/hook-glass-bridge.mp4", brand: "Glass Bridge", niche: "Social · Hook" },
+  { src: "/topk/portfolio/hook-helicopter.mp4", brand: "Action Hook", niche: "Social · Hook" },
+  { src: "/topk/portfolio/viral-power.mp4", brand: "Power", niche: "Social · Viral" },
+  { src: "/topk/portfolio/viral-clarity.mp4", brand: "Clarity", niche: "Social · Viral" },
+  { src: "/topk/portfolio/hyperreal-host.mp4", brand: "Talking-Head Host", niche: "Hyper-Real · Avatar" },
 ];
 
 export default function Portfolio() {
@@ -54,8 +60,8 @@ export default function Portfolio() {
         </Link>
         <div className="nav-links">
           <Link href="/">Home</Link>
-          <a href="/#services">Services</a>
-          <a href="/#models">Digital Models</a>
+          <a href="/#marketing-studio">Marketing Studio</a>
+          <a href="/#social">Social</a>
           <a className="nav-cta" href="https://wa.me/962796669365">Get Free Sample</a>
         </div>
       </nav>
