@@ -93,8 +93,8 @@ export default function Home() {
             </div>
             <div className="hero-stats">
               <div><div className="stat-num">90%</div><div className="stat-label">Cost savings</div></div>
-              <div><div className="stat-num">48h</div><div className="stat-label">Avg. turnaround</div></div>
-              <div><div className="stat-num">9</div><div className="stat-label">AI models</div></div>
+              <div><div className="stat-num">3-5d</div><div className="stat-label">Turnaround</div></div>
+              <div><div className="stat-num">8</div><div className="stat-label">AI models</div></div>
               <div><div className="stat-num">∞</div><div className="stat-label">Revisions</div></div>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function Home() {
         <div className="brand-scroll">
           {Array.from({ length: 2 }).map((_, r) => (
             <span key={r} style={{ display: "flex", gap: "52px" }}>
-              {["Almarai", "Coca-Cola", "Nike", "Pepsi", "Heinz", "Dior", "Gucci", "Louis Vuitton", "Prada", "Hermès", "Rolex", "Valentino"].map((b) => (
+              {["Dior", "Chanel", "Gucci", "Louis Vuitton", "Prada", "Hermès", "Cartier", "Rolex"].map((b) => (
                 <span className="brand-name" key={b + r}>{b}</span>
               ))}
             </span>
@@ -164,7 +164,7 @@ export default function Home() {
         <div className="section-inner">
           <div className="reveal">
             <div className="section-eyebrow"><i data-lucide="users"></i>Digital Model Roster</div>
-            <h2 className="section-h2">9 AI models.<br /><span className="grad">Built for GCC &amp; global brands.</span></h2>
+            <h2 className="section-h2">8 AI models.<br /><span className="grad">Built for GCC &amp; global brands.</span></h2>
             <p className="section-sub">Every model is hyper-realistic, culturally authentic, and available instantly for any campaign.</p>
           </div>
           <div className="models-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
@@ -177,7 +177,6 @@ export default function Home() {
               { n: "Faisal", t: "tag-male", g: "Male · 46", r: "Executive Authority & Corporate Leadership", s: ["GCC", "Gen X"], tags: ["Finance", "Real Estate", "Watches"] },
               { n: "Dana", t: "tag-female", g: "Female · 21", r: "Gen Z Beauty & Tech Lifestyle", s: ["Saudi Arabia / UAE", "Gen Z"], tags: ["Beauty", "Tech", "Gaming", "Social-First"] },
               { n: "Maha", t: "tag-female", g: "Female · 35", r: "Family & Home Lifestyle", s: ["GCC", "Millennials"], tags: ["FMCG", "Food & Bev", "Home", "Family"] },
-              { n: "Malina", t: "tag-intl", g: "Intl · 27", r: "Premium Beauty & Lifestyle", s: ["European", "International / GCC"], tags: ["Luxury", "Skincare", "International"] },
             ].map((m, i) => (
               <div className={`model-card reveal reveal-delay-${(i % 3) + 1}`} key={m.n} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "18px", overflow: "hidden" }}>
                 <div style={{ aspectRatio: "3/4", background: "linear-gradient(135deg, rgba(249,115,22,0.08), rgba(139,92,246,0.08))", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -210,14 +209,10 @@ export default function Home() {
           </div>
           <div className="campaigns-grid">
             {[
-              { i: "milk", tag: "FMCG", c: "Almarai", t: "AI Campaign Concept" },
-              { i: "coffee", tag: "Beverage", c: "Coca-Cola", t: "The Pour That Moves Oceans" },
-              { i: "zap", tag: "Beverage", c: "Pepsi", t: "Release The Vibe" },
-              { i: "trophy", tag: "Sportswear", c: "Nike", t: "Silent Power Unleashed" },
-              { i: "utensils", tag: "Food", c: "Heinz", t: "From Nature to Your Table" },
-              { i: "sparkles", tag: "Beauty", c: "Brazilian Bum Bum", t: "AI Campaign Visual" },
-              { i: "building-2", tag: "Real Estate", c: "Dubai Marina", t: "Night Campaign" },
-              { i: "car", tag: "Automotive", c: "EV Environments", t: "Next-Generation Electric" },
+              { i: "flame", tag: "Fragrance", c: "Sinour", t: "Nixoria · Sivanor · Grandeur" },
+              { i: "sparkles", tag: "Cosmetics", c: "Askim", t: "Beauty Campaign" },
+              { i: "gem", tag: "Jewelry", c: "Layla", t: "AI Brand Film" },
+              { i: "cookie", tag: "F&B", c: "Maretti", t: "Product Motion" },
             ].map((c, idx) => (
               <div className={`campaign-card reveal reveal-delay-${(idx % 4) + 1}`} key={c.c}>
                 <div className="campaign-icon"><i data-lucide={c.i}></i></div>

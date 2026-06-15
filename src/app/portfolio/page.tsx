@@ -24,11 +24,6 @@ const PLAYABLE = [
   { src: "/topk/portfolio/signal.mp4", brand: "Signal from Tomorrow", niche: "Cinematic · Music Video" },
 ];
 
-const CLIENTS = [
-  { brand: "Reyhana", niche: "AI Influencer · Original IP", icon: "user" },
-  { brand: "Real / Fake", niche: "Viral Social · Hook Series", icon: "play-circle" },
-];
-
 export default function Portfolio() {
   useEffect(() => {
     window.lucide?.createIcons();
@@ -90,22 +85,6 @@ export default function Portfolio() {
             ))}
           </div>
 
-          {/* MORE WORK */}
-          <div className="reveal" style={{ marginTop: "64px" }}>
-            <div className="section-eyebrow"><i data-lucide="layers"></i>More Client &amp; Brand Work</div>
-            <p className="section-sub" style={{ marginBottom: "32px" }}>Full reels available on request.</p>
-          </div>
-          <div className="gallery-grid">
-            {CLIENTS.map((c, i) => (
-              <div className={`gallery-card reveal reveal-delay-${(i % 3) + 1}`} key={c.brand}>
-                <div className="poster"><i data-lucide={c.icon}></i></div>
-                <div className="gallery-info">
-                  <div className="gallery-brand">{c.brand}</div>
-                  <div className="gallery-niche">{c.niche}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
