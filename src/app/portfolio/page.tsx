@@ -12,6 +12,10 @@ declare global {
 }
 
 const PLAYABLE = [
+  { src: "/topk/portfolio/sinour-nixoria.mp4", brand: "Sinour — Nixoria", niche: "Fragrance · Client" },
+  { src: "/topk/portfolio/sinour-sivanor.mp4", brand: "Sinour — Sivanor", niche: "Fragrance · Client" },
+  { src: "/topk/portfolio/sinour-grandeur.mp4", brand: "Sinour — Grandeur", niche: "Fragrance · Client" },
+  { src: "/topk/portfolio/askim.mp4", brand: "Askim", niche: "Cosmetics · Client" },
   { src: "/topk/portfolio/layla-jewelry.mp4", brand: "Layla", niche: "Jewelry · AI Brand Film" },
   { src: "/topk/portfolio/gshock.mp4", brand: "G-Shock", niche: "Watches · Product Ad" },
   { src: "/topk/portfolio/maretti-product.mp4", brand: "Maretti", niche: "F&B · Product Motion" },
@@ -21,8 +25,6 @@ const PLAYABLE = [
 ];
 
 const CLIENTS = [
-  { brand: "Sinour", niche: "Fragrance · Client (Nixoria, Sivanor, Grandeur)", icon: "flame" },
-  { brand: "Askim", niche: "Cosmetics · Client Campaign", icon: "sparkles" },
   { brand: "Reyhana", niche: "AI Influencer · Original IP", icon: "user" },
   { brand: "Real / Fake", niche: "Viral Social · Hook Series", icon: "play-circle" },
 ];
