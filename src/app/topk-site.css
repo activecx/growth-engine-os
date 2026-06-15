@@ -206,3 +206,26 @@
 
 @keyframes scrollBrands { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+/* === Simple, video-forward homepage === */
+.topk-site {
+  .hero2 { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: 56px; max-width: 1248px; margin: 0 auto; padding: 140px 56px 90px; }
+  .hero2 h1 { font-family: var(--font-head); font-weight: 800; font-size: clamp(38px,4.8vw,62px); line-height: 1.06; letter-spacing: -0.035em; color: #fff; margin: 18px 0 22px; }
+  .hero2 h1 .grad { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero2-video { justify-self: end; width: 310px; max-width: 100%; border-radius: 28px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 30px 90px rgba(249,115,22,0.20); background: #000; }
+  .hero2-video video { width: 100%; aspect-ratio: 9/16; object-fit: cover; display: block; }
+
+  .types-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .type-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: border-color .2s, transform .2s, background .2s; }
+  .type-card:hover { border-color: rgba(249,115,22,0.28); transform: translateY(-3px); background: rgba(255,255,255,0.06); }
+  .type-icon { width: 48px; height: 48px; border-radius: 13px; background: var(--gradient); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .type-icon i { width: 22px; height: 22px; color: #fff; stroke-width: 1.8; }
+  .type-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; color: #fff; margin-bottom: 7px; }
+  .type-desc { font-family: var(--font-body); font-size: 14px; color: rgba(255,255,255,0.46); line-height: 1.6; }
+
+  @media (max-width: 900px) {
+    .hero2 { grid-template-columns: 1fr; padding: 110px 20px 50px; gap: 36px; }
+    .hero2-video { justify-self: start; width: 250px; }
+    .types-grid { grid-template-columns: 1fr; }
+  }
+}

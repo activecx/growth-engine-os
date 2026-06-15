@@ -11,36 +11,54 @@ declare global {
   }
 }
 
+const WORK = [
+  { src: "/topk/portfolio/sinour-nixoria.mp4", brand: "Sinour — Nixoria", type: "Fragrance Product Ad" },
+  { src: "/topk/portfolio/askim.mp4", brand: "Askim", type: "Cosmetics Ad" },
+  { src: "/topk/portfolio/layla-jewelry.mp4", brand: "Layla", type: "Jewelry Brand Film" },
+  { src: "/topk/portfolio/sinour-sivanor.mp4", brand: "Sinour — Sivanor", type: "Cinematic Fragrance" },
+  { src: "/topk/portfolio/sinour-grandeur.mp4", brand: "Sinour — Grandeur", type: "Luxury Reveal" },
+];
+
+const TYPES = [
+  { i: "megaphone", t: "Product Ads", d: "Punchy 15-second ads built to stop the scroll and sell." },
+  { i: "film", t: "Cinematic Films", d: "Premium brand storytelling with a luxury, editorial feel." },
+  { i: "flame", t: "Social Hooks", d: "Viral-ready vertical clips for Instagram, TikTok & Reels." },
+  { i: "rotate-3d", t: "360° Showcase", d: "Turntable and multi-angle views that show every detail." },
+  { i: "sparkles", t: "Lifestyle & UGC", d: "Your product in the real world — authentic and relatable." },
+  { i: "music", t: "Music-Driven", d: "Beat-synced montages with energy that travels." },
+];
+
+const STEPS = [
+  { n: 1, t: "Send Your Product", d: "Share a photo or a link to your product. That's all we need to start." },
+  { n: 2, t: "We Create", d: "We produce your AI video in the style you choose — concept-driven, on brand." },
+  { n: 3, t: "Receive in Days", d: "Final video delivered in 3–5 days, ready to post on every channel." },
+];
+
 export default function Home() {
   useEffect(() => {
     window.lucide?.createIcons();
-
     const nav = document.querySelector(".topk-site nav");
     const onScroll = () => nav?.classList.toggle("scrolled", window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     onScroll();
-
     const obs = new IntersectionObserver(
-      (entries) => {
+      (entries) =>
         entries.forEach((e) => {
           if (e.isIntersecting) {
             e.target.classList.add("visible");
             obs.unobserve(e.target);
           }
-        });
-      },
+        }),
       { threshold: 0.1, rootMargin: "0px 0px -32px 0px" }
     );
     document
-      .querySelectorAll(".topk-site .reveal, .topk-site .reveal-left")
+      .querySelectorAll(".topk-site .reveal, .topk-site .reveal-left, .topk-site .reveal-right")
       .forEach((el) => obs.observe(el));
-
     const t = setTimeout(() => {
       document
-        .querySelectorAll(".hero-wrap .reveal-left")
+        .querySelectorAll(".hero2 .reveal-left, .hero2 .reveal-right")
         .forEach((el) => el.classList.add("visible"));
     }, 150);
-
     return () => {
       window.removeEventListener("scroll", onScroll);
       clearTimeout(t);
@@ -58,206 +76,82 @@ export default function Home() {
       {/* NAV */}
       <nav>
         <a className="nav-logo" href="#top">
-          <div className="nav-logo-text">
-            Top<span>K</span>
-          </div>
+          <div className="nav-logo-text">Top<span>K</span></div>
         </a>
         <div className="nav-links">
-          <a href="#services">Services</a>
-          <a href="#models">Digital Models</a>
-          <Link href="/portfolio">Portfolio</Link>
+          <a href="#work">Work</a>
+          <a href="#types">Video Types</a>
           <a href="#how">How It Works</a>
+          <Link href="/portfolio">Portfolio</Link>
           <a className="nav-cta" href="#sample">Get Free Sample</a>
         </div>
       </nav>
 
       {/* HERO */}
-      <div className="hero-wrap" id="top">
-        <div className="hero-bg">
-          <img src="/topk/hero-model.png" alt="TopK AI Digital Model" />
-        </div>
-        <div className="hero-inner">
-          <div className="reveal-left">
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "22px" }}>
-              <div className="hero-eyebrow"><i data-lucide="sparkles"></i>AI Creative Agency</div>
-              <div className="sharia-badge"><i data-lucide="shield-check"></i>Sharia-Compliant</div>
-            </div>
-            <h1>Powered by AI.<br /><span className="grad">Limited by Nothing.</span></h1>
-            <p className="hero-sub">
-              AI-powered cinematic brand content, commercial advertising artwork, and model
-              campaigns — produced at agency quality, delivered at startup speed.
-            </p>
-            <div className="hero-actions">
-              <a className="btn-grad" href="#models">Meet Our Digital Models</a>
-              <Link className="btn-outline" href="/portfolio">View Portfolio</Link>
-            </div>
-            <div className="hero-stats">
-              <div><div className="stat-num">90%</div><div className="stat-label">Cost savings</div></div>
-              <div><div className="stat-num">3-5d</div><div className="stat-label">Turnaround</div></div>
-              <div><div className="stat-num">8</div><div className="stat-label">AI models</div></div>
-              <div><div className="stat-num">∞</div><div className="stat-label">Revisions</div></div>
-            </div>
+      <div id="top" className="hero2">
+        <div className="reveal-left">
+          <div className="hero-eyebrow"><i data-lucide="clapperboard"></i>AI Product Videos</div>
+          <h1>AI videos that<br /><span className="grad">sell your product.</span></h1>
+          <p className="hero-sub">
+            We turn your product into scroll-stopping video ads — every style, delivered in days,
+            at a fraction of studio cost.
+          </p>
+          <div className="hero-actions">
+            <a className="btn-grad" href="#sample">Get a Free Sample</a>
+            <a className="btn-outline" href="#work">See Our Work</a>
           </div>
+          <div className="hero-stats">
+            <div><div className="stat-num">3-5d</div><div className="stat-label">Turnaround</div></div>
+            <div><div className="stat-num">$150</div><div className="stat-label">From / video</div></div>
+            <div><div className="stat-num">∞</div><div className="stat-label">Revisions</div></div>
+          </div>
+        </div>
+        <div className="hero2-video reveal-right">
+          <video src="/topk/portfolio/sinour-nixoria.mp4" autoPlay muted loop playsInline />
         </div>
       </div>
 
-      {/* BRAND MARQUEE */}
-      <div className="brand-bar">
-        <div className="brand-scroll">
-          {Array.from({ length: 2 }).map((_, r) => (
-            <span key={r} style={{ display: "flex", gap: "52px" }}>
-              {["Dior", "Chanel", "Gucci", "Louis Vuitton", "Prada", "Hermès", "Cartier", "Rolex"].map((b) => (
-                <span className="brand-name" key={b + r}>{b}</span>
-              ))}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* SERVICES */}
-      <section id="services">
+      {/* WORK */}
+      <section id="work">
         <div className="section-inner">
           <div className="reveal">
-            <div className="section-eyebrow"><i data-lucide="layers"></i>What We Do</div>
-            <h2 className="section-h2">Four services.<br /><span className="grad">One creative powerhouse.</span></h2>
-            <p className="section-sub">Strategy first. AI second. Every output is concept-driven, not prompt-driven.</p>
+            <div className="section-eyebrow"><i data-lucide="play-circle"></i>Our Work</div>
+            <h2 className="section-h2">Real products.<br /><span className="grad">Real AI videos.</span></h2>
+            <p className="section-sub">A few we&apos;ve made for real brands — fragrance, cosmetics, jewelry and more.</p>
           </div>
-          <div className="services-grid">
-            <div className="service-card reveal reveal-delay-1">
-              <div className="sc-num">01</div>
-              <div className="sc-icon ic-a"><i data-lucide="user"></i></div>
-              <div className="sc-title">AI Digital Models</div>
-              <p className="sc-body">Hyper-realistic AI humans built to your brand specifications. Consistent across every campaign, every platform, every format. No scheduling. No agency fees. No limitations.</p>
-              <div className="sc-tags"><span className="sc-tag">Product Photography</span><span className="sc-tag">Brand Ambassador</span><span className="sc-tag">E-commerce</span></div>
-              <a className="sc-btn sc-btn-org" href="#models" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Explore Digital Models</a>
-            </div>
-            <div className="service-card reveal reveal-delay-2">
-              <div className="sc-num">02</div>
-              <div className="sc-icon ic-b"><i data-lucide="megaphone"></i></div>
-              <div className="sc-title">AI-Powered Campaigns</div>
-              <p className="sc-body">We analyze competitors, develop the creative concept, design the artwork, and deliver production-ready campaign assets. Strategy-led, AI-executed.</p>
-              <div className="sc-tags"><span className="sc-tag">Social Media</span><span className="sc-tag">OOH</span><span className="sc-tag">Digital</span></div>
-              <a className="sc-btn sc-btn-grad" href="#sample" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Start a Campaign</a>
-            </div>
-            <div className="service-card reveal reveal-delay-3">
-              <div className="sc-num">03</div>
-              <div className="sc-icon ic-c"><i data-lucide="film"></i></div>
-              <div className="sc-title">AI Advertising Film</div>
-              <p className="sc-body">High-quality AI-generated advertising films and motion content. From concept to final cut — cinematic quality, brand-aligned, at a fraction of traditional production cost.</p>
-              <div className="sc-tags"><span className="sc-tag">TV &amp; Digital</span><span className="sc-tag">4K</span><span className="sc-tag">24fps</span></div>
-              <Link className="sc-btn sc-btn-ghost" href="/portfolio" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Learn More</Link>
-            </div>
-            <div className="service-card reveal reveal-delay-4">
-              <div className="sc-num">04</div>
-              <div className="sc-icon ic-d"><i data-lucide="play-circle"></i></div>
-              <div className="sc-title">Animated Social Content</div>
-              <p className="sc-body">Viral-ready animated creatives and motion graphics built to stop the scroll. Platform-optimized, brand-consistent, built for the speed of social media.</p>
-              <div className="sc-tags"><span className="sc-tag">Instagram</span><span className="sc-tag">TikTok</span><span className="sc-tag">Reels</span></div>
-              <Link className="sc-btn sc-btn-ghost" href="/portfolio" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Learn More</Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MODEL ROSTER */}
-      <section id="models" className="models-section" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="section-inner">
-          <div className="reveal">
-            <div className="section-eyebrow"><i data-lucide="users"></i>Digital Model Roster</div>
-            <h2 className="section-h2">8 AI models.<br /><span className="grad">Built for GCC &amp; global brands.</span></h2>
-            <p className="section-sub">Every model is hyper-realistic, culturally authentic, and available instantly for any campaign.</p>
-          </div>
-          <div className="models-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
-            {[
-              { n: "Khalid", t: "tag-male", g: "Male · 37", r: "Fitness & Premium Lifestyle", s: ["Saudi / GCC", "Athletic Build"], tags: ["Fitness", "Sportswear", "Grooming", "Watches"] },
-              { n: "Salma", t: "tag-female", g: "Female · 26", r: "Modest Fashion & Lifestyle", s: ["Saudi Arabia / GCC"], tags: ["Modest Fashion", "Beauty", "F&B", "Home"] },
-              { n: "Noor", t: "tag-female", g: "Female · 41", r: "Healthcare & Executive Authority", s: ["GCC", "Gen X+"], tags: ["Healthcare", "Banking", "Corporate"] },
-              { n: "Rayan", t: "tag-male", g: "Male · 28", r: "Men's Lifestyle & Modern Professional", s: ["Jordan · UAE · KSA"], tags: ["Fashion", "Streetwear", "Tech", "F&B"] },
-              { n: "Lina", t: "tag-female", g: "Female · 31", r: "Luxury & Premium Lifestyle", s: ["UAE / GCC Premium"], tags: ["Luxury", "Fragrance", "Jewelry", "Skincare"] },
-              { n: "Faisal", t: "tag-male", g: "Male · 46", r: "Executive Authority & Corporate Leadership", s: ["GCC", "Gen X"], tags: ["Finance", "Real Estate", "Watches"] },
-              { n: "Dana", t: "tag-female", g: "Female · 21", r: "Gen Z Beauty & Tech Lifestyle", s: ["Saudi Arabia / UAE", "Gen Z"], tags: ["Beauty", "Tech", "Gaming", "Social-First"] },
-              { n: "Maha", t: "tag-female", g: "Female · 35", r: "Family & Home Lifestyle", s: ["GCC", "Millennials"], tags: ["FMCG", "Food & Bev", "Home", "Family"] },
-            ].map((m, i) => (
-              <div className={`model-card reveal reveal-delay-${(i % 3) + 1}`} key={m.n} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "18px", overflow: "hidden" }}>
-                <div style={{ aspectRatio: "3/4", background: "linear-gradient(135deg, rgba(249,115,22,0.08), rgba(139,92,246,0.08))", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "var(--gradient)", display: "flex", alignItems: "center", justifyContent: "center" }}><i data-lucide="user" style={{ width: 24, height: 24, color: "#fff" }}></i></div>
-                    <p style={{ fontFamily: "var(--font-head)", fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>{m.n}</p>
-                  </div>
-                  <div className={`model-gender-tag ${m.t}`} style={{ position: "absolute", top: "12px", left: "12px", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-head)", fontSize: "10px", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase" }}>{m.g}</div>
-                </div>
-                <div style={{ padding: "20px" }}>
-                  <div style={{ fontFamily: "var(--font-head)", fontWeight: 700, fontSize: "18px", color: "#fff" }}>{m.n}</div>
-                  <div style={{ fontFamily: "var(--font-body)", fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>{m.r}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
-                    {m.tags.map((t) => (<span key={t} style={{ padding: "2px 8px", borderRadius: "9999px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "var(--font-body)", fontSize: "11px", color: "rgba(255,255,255,0.38)" }}>{t}</span>))}
-                  </div>
+          <div className="gallery-grid">
+            {WORK.map((w, i) => (
+              <div className={`gallery-card reveal reveal-delay-${(i % 3) + 1}`} key={w.brand}>
+                <video src={w.src} controls muted playsInline preload="metadata" />
+                <div className="gallery-info">
+                  <div className="gallery-brand">{w.brand}</div>
+                  <div className="gallery-niche">{w.type}</div>
                 </div>
               </div>
             ))}
           </div>
+          <div className="reveal" style={{ marginTop: "28px" }}>
+            <Link className="btn-outline" href="/portfolio">View Full Portfolio →</Link>
+          </div>
         </div>
       </section>
 
-      {/* CAMPAIGN PORTFOLIO */}
-      <section id="campaigns" className="campaigns-section">
+      {/* TYPES */}
+      <section id="types" style={{ borderTop: "1px solid var(--border)" }}>
         <div className="section-inner">
           <div className="reveal">
-            <div className="section-eyebrow"><i data-lucide="briefcase"></i>Campaign Portfolio</div>
-            <h2 className="section-h2">Concept to campaign.<br /><span className="grad">Powered by AI.</span></h2>
-            <p className="section-sub" style={{ marginBottom: "44px" }}>Strategy-led creative for global brands — produced at agency quality, delivered at startup speed.</p>
+            <div className="section-eyebrow"><i data-lucide="layers"></i>What We Create</div>
+            <h2 className="section-h2">Every type of<br /><span className="grad">product video.</span></h2>
+            <p className="section-sub">Whatever your product needs to look its best — we make it with AI.</p>
           </div>
-          <div className="campaigns-grid">
-            {[
-              { i: "flame", tag: "Fragrance", c: "Sinour", t: "Nixoria · Sivanor · Grandeur" },
-              { i: "sparkles", tag: "Cosmetics", c: "Askim", t: "Beauty Campaign" },
-              { i: "gem", tag: "Jewelry", c: "Layla", t: "AI Brand Film" },
-              { i: "cookie", tag: "F&B", c: "Maretti", t: "Product Motion" },
-            ].map((c, idx) => (
-              <div className={`campaign-card reveal reveal-delay-${(idx % 4) + 1}`} key={c.c}>
-                <div className="campaign-icon"><i data-lucide={c.i}></i></div>
-                <span className="campaign-tag">{c.tag}</span>
-                <div className="campaign-info">
-                  <div className="campaign-client">{c.c}</div>
-                  <div className="campaign-type">{c.t}</div>
-                </div>
+          <div className="types-grid">
+            {TYPES.map((t, i) => (
+              <div className={`type-card reveal reveal-delay-${(i % 3) + 1}`} key={t.t}>
+                <div className="type-icon"><i data-lucide={t.i}></i></div>
+                <div className="type-title">{t.t}</div>
+                <div className="type-desc">{t.d}</div>
               </div>
             ))}
-          </div>
-          <div className="reveal" style={{ marginTop: "32px", textAlign: "center" }}>
-            <Link className="btn-outline" href="/portfolio">See Real Client Work →</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* COMPARISON */}
-      <section className="compare-section">
-        <div className="section-inner">
-          <div className="reveal">
-            <div className="section-eyebrow"><i data-lucide="git-compare"></i>The Difference</div>
-            <h2 className="section-h2">The old way<br />vs. <span className="grad">the TopK way.</span></h2>
-            <p className="section-sub" style={{ marginBottom: "40px" }}>Marketers who mastered AI — not a tech company learning marketing.</p>
-          </div>
-          <div className="compare-grid">
-            <div className="compare-col old reveal reveal-delay-1">
-              <div className="compare-col-title">Traditional Production</div>
-              <div className="compare-col-sub">SAR 6,000–22,000 per campaign · 4–8 weeks</div>
-              <ul className="compare-list">
-                {["4–8 weeks production timeline", "SAR 500–2,000 model booking fees", "Studio rental and equipment costs", "Weather, travel, scheduling delays", "Generic models — no cultural fit", "Limited revisions, expensive changes"].map((x) => (
-                  <li key={x}><i data-lucide="x" className="xi"></i>{x}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="compare-col new reveal reveal-delay-2">
-              <div className="compare-col-title">TopK AI Production</div>
-              <div className="compare-col-sub">SAR 850–3,750 per campaign · Up to 85% savings</div>
-              <ul className="compare-list">
-                {["Maximum 48h turnaround", "Zero model fees — pay only for content", "No studio, equipment, or travel costs", "9 GCC/International models — all free", "Cultural authenticity built-in", "Unlimited revisions at no extra cost"].map((x) => (
-                  <li key={x}><i data-lucide="check" className="ci"></i>{x}</li>
-                ))}
-              </ul>
-              <div className="savings-pill"><i data-lucide="trending-down"></i>Up to 98% cost savings</div>
-            </div>
           </div>
         </div>
       </section>
@@ -265,17 +159,12 @@ export default function Home() {
       {/* HOW IT WORKS */}
       <section id="how" className="how-section">
         <div className="section-inner">
-          <div style={{ textAlign: "center", marginBottom: "60px" }} className="reveal">
+          <div style={{ textAlign: "center", marginBottom: "56px" }} className="reveal">
             <div className="section-eyebrow" style={{ justifyContent: "center" }}><i data-lucide="arrow-right"></i>How It Works</div>
-            <h2 className="section-h2" style={{ textAlign: "center", margin: "0 auto", maxWidth: "560px" }}>From concept to delivery<br />in four simple steps.</h2>
+            <h2 className="section-h2" style={{ textAlign: "center", margin: "0 auto", maxWidth: "560px" }}>From product to video<br />in three simple steps.</h2>
           </div>
-          <div className="steps-grid">
-            {[
-              { n: 1, t: "Choose Your Model", d: "Browse our roster of 9 AI digital models and select the one that fits your brand and target audience." },
-              { n: 2, t: "Submit Your Brief", d: "Fill out the campaign brief, share product details, and set your creative direction." },
-              { n: 3, t: "We Create", d: "Our AI produces hyper-realistic content with your product — concept-driven, not prompt-driven." },
-              { n: 4, t: "Receive & Publish", d: "Final content delivered in 3–5 days, production-ready for every channel and format." },
-            ].map((s) => (
+          <div className="steps-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", maxWidth: "900px", margin: "0 auto" }}>
+            {STEPS.map((s) => (
               <div className={`step reveal reveal-delay-${s.n}`} key={s.n}>
                 <div className="step-num">{s.n}</div>
                 <div className="step-title">{s.t}</div>
@@ -290,16 +179,16 @@ export default function Home() {
       <section className="cta-section" id="sample">
         <div className="cta-bg"></div>
         <div className="reveal" style={{ position: "relative" }}>
-          <h2>Get a <span className="grad">free sample</span><br />for your product.</h2>
-          <p>Send us your product link. We&apos;ll create a professional ad visual with a digital model — free.</p>
+          <h2>Get a <span className="grad">free sample</span><br />of your product.</h2>
+          <p>Send us your product — we&apos;ll make a short AI video of it, free. No obligation.</p>
           <div className="cta-perks">
-            <div className="cta-perk"><i data-lucide="check"></i>Hyper-realistic AI model with your product</div>
-            <div className="cta-perk"><i data-lucide="check"></i>Delivered within 48 hours</div>
+            <div className="cta-perk"><i data-lucide="check"></i>A real AI video of your product</div>
+            <div className="cta-perk"><i data-lucide="check"></i>Delivered in a few days</div>
             <div className="cta-perk"><i data-lucide="check"></i>No obligation. No credit card.</div>
           </div>
           <div className="cta-btns">
             <a className="btn-grad" href="https://wa.me/962796669365" style={{ fontSize: "16px", padding: "16px 44px" }}>Claim Free Sample</a>
-            <a className="btn-outline" href="mailto:sales@topk.agency">Book a Call</a>
+            <a className="btn-outline" href="mailto:sales@topk.agency">Email Us</a>
           </div>
         </div>
       </section>
@@ -310,7 +199,7 @@ export default function Home() {
           <div className="footer-top">
             <div>
               <div className="footer-logo"><img src="/topk/topk-logo-white.png" alt="TopK" /></div>
-              <div className="footer-tagline">AI-powered cinematic brand content, commercial advertising artwork, and model campaigns — produced at agency quality, delivered at startup speed.</div>
+              <div className="footer-tagline">AI product videos — every style, produced at agency quality and delivered at startup speed.</div>
               <div className="footer-contact">
                 <a className="footer-contact-item" href="https://topk.agency"><i data-lucide="globe"></i>topk.agency</a>
                 <a className="footer-contact-item" href="https://wa.me/962796669365"><i data-lucide="message-circle"></i>+962 79 666 9365</a>
@@ -319,29 +208,17 @@ export default function Home() {
             </div>
             <div className="footer-cols">
               <div className="footer-col">
-                <div className="footer-col-title">Services</div>
-                <a href="#services">AI Digital Models</a>
-                <a href="#services">AI-Powered Campaigns</a>
-                <a href="#services">AI Advertising Film</a>
-                <a href="#services">Animated Social Content</a>
-              </div>
-              <div className="footer-col">
-                <div className="footer-col-title">Company</div>
+                <div className="footer-col-title">Explore</div>
+                <a href="#work">Our Work</a>
+                <a href="#types">Video Types</a>
                 <Link href="/portfolio">Portfolio</Link>
-                <a href="#how">How It Works</a>
                 <a href="#sample">Free Sample</a>
-              </div>
-              <div className="footer-col">
-                <div className="footer-col-title">Legal</div>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms</a>
-                <a href="#">Refund Policy</a>
               </div>
             </div>
           </div>
           <div className="footer-bottom">
-            <div className="footer-copy">© 2026 TopK Agency. Powered by AI. Limited by Nothing.</div>
-            <div className="footer-pill">AI-Powered · Sharia-Compliant · Built in the Gulf</div>
+            <div className="footer-copy">© 2026 TopK Agency. AI videos for products.</div>
+            <div className="footer-pill">AI-Powered · Built in the Gulf</div>
           </div>
         </div>
       </footer>
