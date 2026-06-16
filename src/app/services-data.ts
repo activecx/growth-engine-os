@@ -39,7 +39,7 @@ export const CATEGORIES: Category[] = [
       { id: "hyper-motion", name: "Hyper Motion", icon: "zap", short: "Kinetic product hero shots that stop the scroll.", long: "Fast, kinetic product hero shots — product spinning, ingredients flying, dramatic motion and light. Pure visual appeal, no talking head: built to stop the scroll in the first second.", examples: [
         { src: "/topk/portfolio/iphone.mp4", label: "Tech Product" },
         { src: "/topk/portfolio/soda.mp4", label: "Fruit Splash" },
-        { src: "/topk/portfolio/watch.mp4", label: "Luxury Watch" },
+        { src: "/topk/portfolio/casio.mp4", label: "Casio G-Shock" },
         { src: "/topk/portfolio/jewelry.mp4", label: "Jewelry Macro" },
       ] },
       { id: "product-review", name: "Product Reviews", icon: "star", short: "Honest influencer-style takes that build trust.", long: "Authentic review-style talking content — like an influencer giving an honest take on your product. Builds credibility and pre-sells skeptical buyers before they ever reach your page.", examples: [
@@ -58,7 +58,7 @@ export const CATEGORIES: Category[] = [
       ] },
       { id: "try-on", name: "Virtual Try-On", icon: "shirt", short: "Your product worn on a real-looking model.", long: "Show your product on a person — apparel, jewelry, accessories, eyewear. Built for fashion and jewelry brands, available in standard UGC and higher-fidelity Pro versions.", examples: [
         { src: "/topk/portfolio/fashion-woman.mp4", label: "Apparel — On Model" },
-        { src: "/topk/portfolio/layla-jewelry.mp4", label: "Jewelry — Brand Film" },
+        { src: "/topk/portfolio/stylex.mp4", label: "Stylex — Jewelry" },
       ] },
     ],
   },

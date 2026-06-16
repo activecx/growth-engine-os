@@ -1,0 +1,125 @@
+/* ============================================================
+   TopK AI — Design System v2.0  (ported from colors_and_type.css)
+   Used by all /lp/* funnel pages.
+   ============================================================ */
+
+/* ---- Color tokens ----------------------------------------- */
+:root {
+  --ds-flame-orange:    #F97316;
+  --ds-hot-pink:        #EC4899;
+  --ds-electric-purple: #8B5CF6;
+  --ds-near-black:      #0A0008;
+  --ds-white:           #FFFFFF;
+  --ds-light-surface:   #FFF5F5;
+  --ds-mid-gray:        #6B7280;
+  --ds-border-gray:     #E5E7EB;
+
+  --ds-gradient: linear-gradient(135deg, #F97316 0%, #EC4899 50%, #8B5CF6 100%);
+  --ds-gradient-h: linear-gradient(90deg, #F97316 0%, #EC4899 50%, #8B5CF6 100%);
+  --ds-gradient-creative: linear-gradient(135deg, #F97316 0%, #EC4899 100%);
+
+  /* Semantic */
+  --ds-text-primary:   var(--ds-near-black);
+  --ds-text-secondary: var(--ds-mid-gray);
+  --ds-bg-page:        var(--ds-light-surface);
+  --ds-bg-card:        var(--ds-white);
+
+  /* Radius */
+  --ds-radius-card:   16px;
+  --ds-radius-btn:    14px;
+  --ds-radius-pill:   9999px;
+  --ds-radius-sm:     8px;
+
+  /* Shadow */
+  --ds-shadow-card:   0px 4px 24px rgba(0,0,0,0.06);
+  --ds-shadow-hover:  0px 8px 40px rgba(0,0,0,0.12);
+  --ds-shadow-btn:    0px 2px 12px rgba(249,115,22,0.30);
+
+  /* Icon circle */
+  --ds-icon-circle: 64px;
+}
+
+/* ---- Base resets for funnel pages -------------------------- */
+.lp-root {
+  min-height: 100vh;
+  background: var(--ds-light-surface);
+  font-family: 'Inter', sans-serif;
+  color: var(--ds-near-black);
+  line-height: 1.6;
+}
+
+/* ---- Keyframes --------------------------------------------- */
+@keyframes lp-pulse-ring {
+  0%   { transform: scale(.85); opacity: .6; }
+  70%  { transform: scale(1.9);  opacity: 0;  }
+  100% { opacity: 0; }
+}
+
+@keyframes lp-blink {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: .35; }
+}
+
+/* ---- Input focus ------------------------------------------- */
+.lp-root input::placeholder { color: #9CA3AF; }
+.lp-root input:focus {
+  outline: none;
+  border-color: var(--ds-flame-orange) !important;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.15);
+}
+
+/* ---- Gradient text utility --------------------------------- */
+.lp-grad-text {
+  background: var(--ds-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- Pulse ring animation ---------------------------------- */
+.lp-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #EC4899;
+  animation: lp-pulse-ring 2.2s ease-out infinite;
+}
+
+/* ---- Timer blink ------------------------------------------ */
+.lp-blink {
+  animation: lp-blink 1.4s ease-in-out infinite;
+}
+
+/* ---- Gradient border card trick (TopK Way card) ----------- */
+.lp-grad-border {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-card);
+  background-image: linear-gradient(#FFFFFF, #FFFFFF),
+                    linear-gradient(135deg, #F97316 0%, #EC4899 50%, #8B5CF6 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0px 12px 44px rgba(236,72,153,.16);
+}
+
+/* ---- Horizontal scroll (examples) ------------------------- */
+.lp-scroll-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 30px 4px 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.lp-scroll-track::-webkit-scrollbar { height: 4px; }
+.lp-scroll-track::-webkit-scrollbar-thumb {
+  background: rgba(10,0,8,.15);
+  border-radius: 2px;
+}
+
+/* ---- CTA button hover ------------------------------------- */
+.lp-btn-grad {
+  transition: opacity .15s ease;
+}
+.lp-btn-grad:hover { opacity: .92; }
