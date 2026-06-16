@@ -172,6 +172,78 @@ function OrangeCheckCircle({ size = 22 }: { size?: number }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   PORTFOLIO SHOWCASE — auto-plays each card when it scrolls into view
+   ═══════════════════════════════════════════════════════════════ */
+function PortfolioShowcase() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const videos = Array.from(container.querySelectorAll('video'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target as HTMLVideoElement;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {/* autoplay blocked — stay paused silently */});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      // 40% of the card must be visible before playing
+      { threshold: 0.4 }
+    );
+
+    videos.forEach((v) => observer.observe(v));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="lp-scroll-track" ref={containerRef}>
+      {PORTFOLIO_CLIPS.map(clip => (
+        <div key={clip.file} style={{ flex: '0 0 auto', width: 204, scrollSnapAlign: 'start' }}>
+          <div style={{
+            position: 'relative', width: '100%', aspectRatio: '9 / 16',
+            borderRadius: 16, overflow: 'hidden',
+            background: '#0A0008', boxShadow: '0px 6px 26px rgba(10,0,8,.16)',
+          }}>
+            <video
+              src={`/topk/portfolio/${clip.file}`}
+              loop muted playsInline
+              preload="metadata"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(180deg,rgba(10,0,8,0) 42%,rgba(10,0,8,.74) 100%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute', top: 10, left: 10,
+              background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(6px)',
+              color: '#fff', fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 10,
+              letterSpacing: '.04em', padding: '3px 9px', borderRadius: 9999,
+            }}>
+              9:16 · {clip.dur}
+            </div>
+            <div style={{ position: 'absolute', left: 12, right: 12, bottom: 11, color: '#fff', fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>
+              {clip.label}
+              <span style={{ display: 'block', fontFamily: "'Inter', sans-serif", fontWeight: 400, fontSize: 11, opacity: .82 }}>
+                {clip.cat}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════ */
 export default function LpAPage() {
@@ -766,62 +838,8 @@ export default function LpAPage() {
           </p>
         </div>
 
-        {/* Horizontal scroll strip — 9:16 cards */}
-        <div className="lp-scroll-track">
-          {PORTFOLIO_CLIPS.map(clip => (
-            <div key={clip.file} style={{ flex: '0 0 auto', width: 204, scrollSnapAlign: 'start' }}>
-              <div style={{
-                position: 'relative', width: '100%', aspectRatio: '9 / 16',
-                borderRadius: 16, overflow: 'hidden',
-                background: '#0A0008', boxShadow: '0px 6px 26px rgba(10,0,8,.16)',
-              }}>
-                <video
-                  src={`/topk/portfolio/${clip.file}`}
-                  loop muted playsInline
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                  onMouseEnter={e => void (e.currentTarget as HTMLVideoElement).play()}
-                  onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                />
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(180deg,rgba(10,0,8,0) 42%,rgba(10,0,8,.74) 100%)',
-                  pointerEvents: 'none',
-                }} />
-                <div style={{
-                  position: 'absolute', top: 10, left: 10,
-                  background: 'rgba(255,255,255,.16)', backdropFilter: 'blur(6px)',
-                  color: '#fff', fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 10,
-                  letterSpacing: '.04em', padding: '3px 9px', borderRadius: 9999,
-                }}>
-                  9:16 · {clip.dur}
-                </div>
-                <button
-                  aria-label={`Play ${clip.label}`}
-                  style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%,-50%)',
-                    width: 46, height: 46, border: 'none', borderRadius: '50%',
-                    background: 'rgba(255,255,255,.92)', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 16px rgba(0,0,0,.3)',
-                  }}
-                  onClick={e => {
-                    const v = (e.currentTarget as HTMLElement).parentElement?.querySelector('video') as HTMLVideoElement | null;
-                    if (v) { v.paused ? void v.play() : (v.pause(), (v.currentTime = 0)); }
-                  }}
-                >
-                  <IconPlay color="#0A0008" size={17} marginLeft={3} />
-                </button>
-                <div style={{ position: 'absolute', left: 12, right: 12, bottom: 11, color: '#fff', fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>
-                  {clip.label}
-                  <span style={{ display: 'block', fontFamily: "'Inter', sans-serif", fontWeight: 400, fontSize: 11, opacity: .82 }}>
-                    {clip.cat}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Horizontal scroll strip — 9:16 cards, auto-play on scroll-into-view */}
+        <PortfolioShowcase />
       </section>
 
       {/* ── VALUE STACK ──────────────────────────────────────── */}
