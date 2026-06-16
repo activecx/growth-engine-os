@@ -195,6 +195,22 @@ export default function LpAPage() {
   const [email, setEmail] = useState('');
   const [brand, setBrand] = useState('');
 
+  /* ── VSL player ──────────────────────────────────────────── */
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [vslPlaying, setVslPlaying] = useState(false);
+
+  function handleVslPlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    setVslPlaying(true);
+    // Set src lazily on first click (click-to-load: avoids fetching 59 MB on page load)
+    if (!v.src || !v.src.includes('vsl.mp4')) {
+      v.src = '/topk/vsl.mp4';
+      v.load();
+    }
+    void v.play();
+  }
+
   /* ── Scroll-to-form ──────────────────────────────────────── */
   const orderRef = useRef<HTMLElement>(null);
   const scrollToOrder = useCallback(() => {
@@ -314,60 +330,74 @@ export default function LpAPage() {
 
       {/* ── VSL PLAYER ───────────────────────────────────────── */}
       <section style={{ maxWidth: 760, margin: '0 auto', padding: '28px 24px 0' }}>
-        {/* TODO: swap in the final Rihanna VSL video — replace poster img with <video> */}
         <div style={{
           position: 'relative', width: '100%', aspectRatio: '16 / 9',
           borderRadius: 16, overflow: 'hidden',
           boxShadow: '0px 18px 60px rgba(10,0,8,.22)',
           background: '#0A0008',
         }}>
-          {/* Poster image — replace with real VSL thumbnail */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/topk/hero-model.png"
-            alt="TopK AI ad — VSL thumbnail"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-          {/* Gradient overlay */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg,rgba(10,0,8,.12) 0%,rgba(10,0,8,.55) 100%)',
-            pointerEvents: 'none',
-          }} />
-          {/* Play button — scrolls to order form */}
-          <button
-            onClick={scrollToOrder}
-            aria-label="Play video"
+          {/* Real VSL — src set lazily on first click to keep initial page load fast */}
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <video
+            ref={videoRef}
+            poster="/topk/vsl-poster.jpg"
+            preload="none"
+            playsInline
+            controls={vslPlaying}
             style={{
-              position: 'absolute', top: '50%', left: '50%',
-              transform: 'translate(-50%,-50%)',
-              width: 88, height: 88,
-              border: 'none', borderRadius: '50%',
-              background: GRAD, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 30px rgba(236,72,153,.5)',
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              objectFit: 'cover', display: 'block',
             }}
-          >
-            <span className="lp-pulse-ring" />
-            <IconPlay color="#FFFFFF" size={32} marginLeft={5} />
-          </button>
-          {/* Caption bar */}
-          <div style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0,
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '14px 18px', color: '#fff',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14,
-          }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(6px)',
-              padding: '4px 10px', borderRadius: 9999, fontSize: 12,
+          />
+
+          {/* Gradient overlay — hidden once playing so controls are fully usable */}
+          {!vslPlaying && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(180deg,rgba(10,0,8,.12) 0%,rgba(10,0,8,.55) 100%)',
+              pointerEvents: 'none',
+            }} />
+          )}
+
+          {/* Play button overlay — visible before first play */}
+          {!vslPlaying && (
+            <button
+              onClick={handleVslPlay}
+              aria-label="Play video"
+              style={{
+                position: 'absolute', top: '50%', left: '50%',
+                transform: 'translate(-50%,-50%)',
+                width: 88, height: 88,
+                border: 'none', borderRadius: '50%',
+                background: GRAD, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 30px rgba(236,72,153,.5)',
+              }}
+            >
+              <span className="lp-pulse-ring" />
+              <IconPlay color="#FFFFFF" size={32} marginLeft={5} />
+            </button>
+          )}
+
+          {/* Caption bar — visible before first play */}
+          {!vslPlaying && (
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0,
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '14px 18px', color: '#fff',
+              fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14,
             }}>
-              <span className="lp-blink" style={{ width: 7, height: 7, borderRadius: '50%', background: '#F87171', display: 'inline-block' }} />
-              WATCH
-            </span>
-            <span style={{ opacity: .9 }}>{COPY.videoCaption}</span>
-          </div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(6px)',
+                padding: '4px 10px', borderRadius: 9999, fontSize: 12,
+              }}>
+                <span className="lp-blink" style={{ width: 7, height: 7, borderRadius: '50%', background: '#F87171', display: 'inline-block' }} />
+                WATCH
+              </span>
+              <span style={{ opacity: .9 }}>{COPY.videoCaption}</span>
+            </div>
+          )}
         </div>
       </section>
 
