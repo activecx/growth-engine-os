@@ -26,9 +26,9 @@ const COPY = {
   videoCaption: '3 AI ads we shipped this week — in under an hour each',
   orderTitle: 'Claim your first AI ad',
   savePct: 'Save $100',
-  bumpName: 'Yes! Add the All-Format Pack',
+  bumpName: 'Yes! Rush my ad — 24-hour delivery',
   bumpDesc:
-    'Get your ad resized for Reels, TikTok, Stories, YouTube & feed (9:16, 1:1, 16:9). One click, every platform covered.',
+    'Jump the line — top priority in our queue. Your ad delivered in 24 hours instead of 48.',
 };
 
 /* ─── Value stack — honest deliverables (no fantasy totals) ── */
@@ -1109,7 +1109,7 @@ export default function LpAPage() {
             },
             {
               q: 'Can I run it on Meta, TikTok, and Instagram?',
-              a: 'Yes. It\'s delivered ready to run on all of them. Want every other size too (1:1, 4:5, 16:9)? Add the All-Format Pack for $27 at checkout.',
+              a: 'Yes — your ad is delivered as a 15-second vertical (9:16), ready to run on Meta, TikTok, and Instagram, the best-performing format for paid social.',
             },
             {
               q: 'Is this really only $49?',
