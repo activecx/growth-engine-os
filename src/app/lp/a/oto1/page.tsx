@@ -2,10 +2,12 @@
 
 // OTO1 — 6-Ad Campaign Bundle ($294)
 // Brunson one-decision page: one gradient accept CTA + plain-text decline link.
-// Accept → stub Stripe one-click charge $294 → /lp/a/thanks
+// Accept → off-session Stripe charge $294 → /lp/a/thanks
 // Decline → /lp/a/down1
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { track } from '@/lib/track';
 
 /* ─── Design constants (match /lp/a) ─────────────────────── */
 const GRAD = 'linear-gradient(135deg,#F97316 0%,#EC4899 50%,#8B5CF6 100%)';
@@ -83,27 +85,53 @@ function IconInfo() {
 /* ═══════════════════════════════════════════════════════════
    PAGE
    ═══════════════════════════════════════════════════════════ */
-export default function Oto1Page() {
+function Oto1Inner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId') ?? (typeof window !== 'undefined' ? localStorage.getItem('topk_funnel_order') : null);
 
-  function handleAccept() {
-    // TODO: Stripe one-click charge $294 to card on file from the $49 order.
-    // Example:
-    //   const res = await fetch('/api/checkout/oto1', { method: 'POST' });
-    //   const { url } = await res.json();
-    //   window.location.href = url;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAccept() {
+    if (!orderId) {
+      // Fallback: route without charging (edge case: cookies cleared)
+      router.push('/lp/a/thanks');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+
     try {
-      const prev = JSON.parse(localStorage.getItem('topk_funnel_step') || '{}');
-      localStorage.setItem(
-        'topk_funnel_step',
-        JSON.stringify({ ...prev, got1: true, step: 'thanks' }),
-      );
-    } catch (_) { /* storage blocked */ }
-    router.push('/lp/a/thanks');
+      const res = await fetch('/api/upsell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, offer: 'oto1' }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string; requires_action?: boolean };
+
+      if (data.error) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const prev = JSON.parse(localStorage.getItem('topk_funnel_step') || '{}');
+        localStorage.setItem('topk_funnel_step', JSON.stringify({ ...prev, got1: true, step: 'thanks' }));
+      } catch (_) { /* storage blocked */ }
+
+      track('Purchase', { value: PRICE, currency: 'USD', content_name: 'oto1-6-ad-bundle', num_items: AD_COUNT });
+
+      router.push('/lp/a/thanks');
+    } catch {
+      setError('Network error — please try again or contact support.');
+      setLoading(false);
+    }
   }
 
   function handleDecline() {
-    router.push('/lp/a/down1');
+    router.push(`/lp/a/down1${orderId ? `?orderId=${orderId}` : ''}`);
   }
 
   return (
@@ -244,22 +272,35 @@ export default function Oto1Page() {
           Lock it on this page and your price holds for all {AD_COUNT} — leave this page and every future ad is $149.
         </p>
 
+        {error && (
+          <div style={{
+            margin: '12px auto 0', maxWidth: 520,
+            background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)',
+            borderRadius: 10, padding: '12px 16px',
+            color: '#DC2626', fontSize: 14, fontFamily: "'Inter', sans-serif",
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* ACCEPT CTA */}
         <button
           className="lp-btn-grad"
           onClick={handleAccept}
+          disabled={loading}
           style={{
             marginTop: 8, width: '100%', maxWidth: 520, padding: '19px 24px',
             border: 'none', borderRadius: 14,
             background: GRAD, color: '#fff',
             fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18,
-            cursor: 'pointer',
+            cursor: loading ? 'wait' : 'pointer',
+            opacity: loading ? 0.75 : 1,
             boxShadow: '0px 4px 20px rgba(236,72,153,.4)',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
           }}
         >
-          Yes — add my 6-Ad Bundle for ${PRICE}
-          <IconArrow />
+          {loading ? 'Processing…' : `Yes — add my 6-Ad Bundle for $${PRICE}`}
+          {!loading && <IconArrow />}
         </button>
 
         {/* Micro-copy */}
@@ -271,6 +312,7 @@ export default function Oto1Page() {
         <div style={{ marginTop: 18 }}>
           <button
             onClick={handleDecline}
+            disabled={loading}
             style={{
               background: 'none', border: 'none',
               color: '#9CA3AF',
@@ -289,5 +331,13 @@ export default function Oto1Page() {
 
       </main>
     </div>
+  );
+}
+
+export default function Oto1Page() {
+  return (
+    <Suspense>
+      <Oto1Inner />
+    </Suspense>
   );
 }

@@ -4,6 +4,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+import { track } from '@/lib/track';
+
+/* ─── Stripe singleton (loaded once) ──────────────────────── */
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 /* ─── Design constants ─────────────────────────────────────── */
 const GRAD = 'linear-gradient(135deg,#F97316 0%,#EC4899 50%,#8B5CF6 100%)';
@@ -23,7 +34,7 @@ const COPY = {
   subhead:
     'No studio. No models. No crew. No weeks of editing. With AI and our experience, we build a 15-second vertical ad of YOUR product — hook, showcase, call-to-action, music and captions — in 48 hours. Regular price $149 — today $49, you save $100. Love it, or it\'s free.',
   urgencyLine: 'Intro launch: your first AI video ad is just $49 — Save $100 off the regular $149. Limited onboarding slots this month.',
-  videoCaption: '3 AI ads we shipped this week — in under an hour each',
+  videoCaption: 'Watch how it works — or skip straight to the offer below',
   orderTitle: 'Claim your first AI ad',
   savePct: 'Save $100',
   bumpName: 'Yes! Rush my ad — 24-hour delivery',
@@ -40,28 +51,6 @@ const VALUE_STACK = [
   { title: '3 free revisions', desc: 'Until it\'s exactly what you pictured' },
   { title: '48-hour delivery', desc: 'From brief to finished ad — days, not weeks' },
   { title: 'Multi-platform export', desc: 'Ready to run on Meta, TikTok & Instagram (9:16)' },
-];
-
-/* ─── Testimonials — PLACEHOLDER: replace with real consented quotes ── */
-const TESTIMONIALS = [
-  {
-    quote: 'We had a finished ad live on Meta the next morning. It outperformed the studio spot we paid 40x for.',
-    name: 'Lina Haddad',
-    role: 'Head of Growth, DTC beauty',
-    initial: 'L',
-  },
-  {
-    quote: 'No crew, no shoot day, no back-and-forth. Brief in, banger out. This is how we ship creative now.',
-    name: 'Omar Farouk',
-    role: 'Founder, F&B brand',
-    initial: 'O',
-  },
-  {
-    quote: 'The hook testing alone paid for itself. Our CPA dropped 31% in the first week.',
-    name: 'Dana Saleh',
-    role: 'Performance lead, retail',
-    initial: 'D',
-  },
 ];
 
 /* ─── Portfolio clips (real files from public/topk/portfolio/) ─── */
@@ -385,6 +374,238 @@ function VideoLightbox({ clip, onClose }: { clip: PortfolioClip; onClose: () => 
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   STRIPE PAYMENT STEP — inner form that uses stripe hooks
+   Must be rendered inside an <Elements> provider.
+   ═══════════════════════════════════════════════════════════════ */
+interface StripePaymentStepProps {
+  name: string;
+  email: string;
+  brand: string;
+  bump: boolean;
+  setBump: (v: boolean) => void;
+  total: number;
+  orderId: string | null;
+  setOrderId: (id: string) => void;
+  clientSecret: string | null;
+  setClientSecret: (s: string) => void;
+  onBack: () => void;
+  onSuccess: (orderId: string) => void;
+  bumpBorder: string;
+  bumpBg: string;
+  bumpCheckBg: string;
+  bumpCheckBorder: string;
+}
+
+function StripePaymentStep({
+  name, email, brand, bump, setBump, total,
+  orderId, setOrderId, clientSecret, setClientSecret,
+  onBack, onSuccess,
+  bumpBorder, bumpBg, bumpCheckBg, bumpCheckBorder,
+}: StripePaymentStepProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  // Meta Pixel: reached the payment step
+  useEffect(() => {
+    track('AddPaymentInfo', { value: total, currency: 'USD' });
+  }, []);
+
+  async function handlePay() {
+    if (!stripe || !elements) return;
+
+    setPayError(null);
+    setPaying(true);
+
+    // 1. Submit elements (validates card locally)
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setPayError(submitError.message ?? 'Card error');
+      setPaying(false);
+      return;
+    }
+
+    // 2. Create a PaymentMethod from the Element
+    const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({ elements });
+    if (pmError || !paymentMethod) {
+      setPayError(pmError?.message ?? 'Could not create payment method');
+      setPaying(false);
+      return;
+    }
+
+    // 3. POST /api/order — creates Customer + PaymentIntent on the server
+    let res: Response;
+    try {
+      res = await fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, brand, bump, paymentMethodId: paymentMethod.id }),
+      });
+    } catch {
+      setPayError('Network error — please try again.');
+      setPaying(false);
+      return;
+    }
+
+    const data = await res.json() as {
+      clientSecret?: string;
+      orderId?: string;
+      status?: string;
+      error?: string;
+    };
+
+    if (!res.ok || data.error) {
+      setPayError(data.error ?? 'Payment failed — please try again.');
+      setPaying(false);
+      return;
+    }
+
+    setOrderId(data.orderId!);
+    setClientSecret(data.clientSecret!);
+
+    // 4. If already succeeded (no 3DS), navigate immediately
+    if (data.status === 'succeeded') {
+      setPaying(false);
+      onSuccess(data.orderId!);
+      return;
+    }
+
+    // 5. Otherwise confirm (handles 3DS redirect flow)
+    const { error: confirmError } = await stripe.confirmPayment({
+      clientSecret: data.clientSecret!,
+      confirmParams: {
+        return_url: `${window.location.origin}/lp/a/oto1?orderId=${data.orderId}`,
+      },
+      redirect: 'if_required',
+    });
+
+    if (confirmError) {
+      setPayError(confirmError.message ?? 'Payment failed');
+      setPaying(false);
+      return;
+    }
+
+    // Payment succeeded without redirect
+    setPaying(false);
+    onSuccess(data.orderId!);
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+      {/* Stripe PaymentElement */}
+      <div>
+        <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 8 }}>
+          Card details
+        </label>
+        <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '13px 15px', background: '#fff' }}>
+          <PaymentElement options={{ layout: 'tabs' }} />
+        </div>
+      </div>
+
+      {/* ORDER BUMP */}
+      <div
+        onClick={() => setBump(!bump)}
+        style={{
+          cursor: 'pointer',
+          border: `2px dashed ${bumpBorder}`,
+          background: bumpBg,
+          borderRadius: 12, padding: 16,
+          display: 'flex', gap: 12, alignItems: 'flex-start',
+          transition: 'all .15s ease',
+        }}
+      >
+        <div style={{
+          width: 24, height: 24, borderRadius: 6,
+          border: `2px solid ${bumpCheckBorder}`,
+          background: bumpCheckBg,
+          flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          marginTop: 2,
+        }}>
+          <span style={{ opacity: bump ? 1 : 0 }}>
+            <IconCheckMini color="#fff" size={15} />
+          </span>
+        </div>
+        <div>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: '#0A0008' }}>
+            {COPY.bumpName} —{' '}
+            <span style={{ color: '#F97316' }}>+{money(BUMP_PRICE)}</span>
+          </div>
+          <div style={{ fontSize: 14, color: '#6B7280', marginTop: 3 }}>{COPY.bumpDesc}</div>
+        </div>
+      </div>
+
+      {payError && (
+        <div style={{
+          background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)',
+          borderRadius: 10, padding: '12px 16px',
+          color: '#DC2626', fontSize: 14, fontFamily: "'Inter', sans-serif",
+        }}>
+          {payError}
+        </div>
+      )}
+
+      {/* Complete order CTA */}
+      <button
+        className="lp-btn-grad"
+        onClick={handlePay}
+        disabled={paying || !stripe}
+        style={{
+          marginTop: 4, width: '100%', padding: 18, border: 'none', borderRadius: 14,
+          background: GRAD, color: '#fff',
+          fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17,
+          cursor: paying ? 'wait' : 'pointer',
+          opacity: paying ? 0.75 : 1,
+          boxShadow: '0px 2px 16px rgba(236,72,153,.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+        }}
+      >
+        <IconLock color="#fff" size={19} />
+        {paying ? 'Processing…' : `Complete my order — ${money(total)}`}
+      </button>
+
+      <button
+        onClick={onBack}
+        style={{
+          background: 'none', border: 'none', color: '#9CA3AF',
+          fontFamily: "'Inter', sans-serif", fontSize: 13,
+          cursor: 'pointer', padding: 0, textDecoration: 'underline', alignSelf: 'center',
+        }}
+      >
+        ← Back to your info
+      </button>
+    </div>
+  );
+}
+
+/* ─── Wrapper that mounts Elements only when on the pay step ── */
+function PaymentStepWrapper(props: StripePaymentStepProps) {
+  // We mount Elements with a minimal amount so the PaymentElement can render.
+  // The real amount is set server-side in /api/order.
+  const options = {
+    mode: 'payment' as const,
+    amount: (BASE_PRICE + (props.bump ? BUMP_PRICE : 0)) * 100,
+    currency: 'usd',
+    appearance: {
+      theme: 'stripe' as const,
+      variables: {
+        colorPrimary: '#F97316',
+        borderRadius: '10px',
+        fontFamily: 'Inter, sans-serif',
+      },
+    },
+  };
+
+  return (
+    <Elements stripe={stripePromise} options={options}>
+      <StripePaymentStep {...props} />
+    </Elements>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════ */
 export default function LpAPage() {
@@ -397,6 +618,16 @@ export default function LpAPage() {
     return () => clearInterval(id);
   }, []);
 
+  /* ── Meta Pixel: ViewContent on landing ──────────────────── */
+  useEffect(() => {
+    track('ViewContent', {
+      content_name: 'TopK First AI Ad — $49',
+      content_category: 'ai-video-ad',
+      value: BASE_PRICE,
+      currency: 'USD',
+    });
+  }, []);
+
   /* ── Form step ───────────────────────────────────────────── */
   const [formStep, setFormStep] = useState<'info' | 'pay'>('info');
 
@@ -407,6 +638,12 @@ export default function LpAPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [brand, setBrand] = useState('');
+
+  /* ── Stripe payment intent client secret ─────────────────── */
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [infoLoading, setInfoLoading] = useState(false);
+  const [infoError, setInfoError] = useState<string | null>(null);
 
   /* ── VSL player ──────────────────────────────────────────── */
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -439,21 +676,28 @@ export default function LpAPage() {
   /* ── Derived ─────────────────────────────────────────────── */
   const total = BASE_PRICE + (bump ? BUMP_PRICE : 0);
 
-  /* ── Submit stub ─────────────────────────────────────────── */
-  function handleCompleteOrder() {
-    // TODO: Zoho lead capture (name/email/brand) + Stripe Checkout $49 (or $76 w/bump)
-    const orderNo = 'TK' + Math.floor(100000 + Math.random() * 899999);
-    try {
-      localStorage.setItem(
-        'topk_funnel_cart',
-        JSON.stringify({ orderNo, bump, basePrice: BASE_PRICE, bumpPrice: BUMP_PRICE }),
-      );
-      localStorage.setItem(
-        'topk_funnel_step',
-        JSON.stringify({ step: 'up1', got1: false, got2: false, gotD1: false, gotD2: false }),
-      );
-    } catch (_) { /* storage blocked in some contexts */ }
-    router.push('/lp/a/oto1');
+  /* ── Step 1 "Continue" — capture lead in Zoho + move to pay step ── */
+  async function handleContinueToPayment() {
+    if (!name.trim() || !email.trim() || !brand.trim()) {
+      setInfoError('Please fill in all fields.');
+      return;
+    }
+    setInfoError(null);
+    setInfoLoading(true);
+
+    // Fire-and-forget Zoho lead (non-blocking — checkout proceeds regardless)
+    fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, brand }),
+    }).catch(() => { /* non-fatal */ });
+
+    // Meta Pixel: lead captured + checkout started
+    track('Lead', { content_name: 'TopK First AI Ad', value: BASE_PRICE, currency: 'USD' });
+    track('InitiateCheckout', { value: total, currency: 'USD', num_items: 1 });
+
+    setInfoLoading(false);
+    setFormStep('pay');
   }
 
   /* ── Progress bar colors ──────────────────────────────────── */
@@ -544,6 +788,35 @@ export default function LpAPage() {
         <p style={{ fontSize: 20, color: '#6B7280', maxWidth: '56ch', margin: '20px auto 0' }}>
           {COPY.subhead}
         </p>
+
+        {/* Primary CTA — above the fold so visitors never have to watch 6 min to act */}
+        <button
+          className="lp-btn-grad"
+          onClick={scrollToOrder}
+          style={{
+            marginTop: 26, padding: '17px 38px', border: 'none', borderRadius: 14,
+            background: GRAD, color: '#fff',
+            fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17,
+            cursor: 'pointer', boxShadow: '0px 4px 18px rgba(236,72,153,.34)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+          }}
+        >
+          Get my first ad — {money(BASE_PRICE)}
+          <IconArrow size={18} />
+        </button>
+
+        {/* Trust signal — stars + the real brands whose ads ARE the proof */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 9, marginTop: 16, flexWrap: 'wrap',
+        }}>
+          <span style={{ display: 'inline-flex', gap: 2 }}>
+            {[0,1,2,3,4].map(s => <StarFill key={s} size={16} />)}
+          </span>
+          <span style={{ fontSize: 14, color: '#6B7280', fontWeight: 500 }}>
+            Real ads we&#39;ve shipped for Stylex · Casio · Askim · Gucci · iPhone
+          </span>
+        </div>
       </section>
 
       {/* ── VSL PLAYER ───────────────────────────────────────── */}
@@ -625,6 +898,19 @@ export default function LpAPage() {
         ref={orderRef}
         style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px 8px', scrollMarginTop: 80 }}
       >
+        {/* Proof beside the ask — the same AI ads we ship for real brands */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 9, marginBottom: 16, flexWrap: 'wrap', textAlign: 'center',
+        }}>
+          <span style={{ display: 'inline-flex', gap: 2 }}>
+            {[0,1,2,3,4].map(s => <StarFill key={s} size={15} />)}
+          </span>
+          <span style={{ fontSize: 14, color: '#6B7280', fontWeight: 500 }}>
+            The same AI ads we make for Stylex, Casio &amp; Askim — now for your product.
+          </span>
+        </div>
+
         <div style={{
           background: '#FFFFFF', borderRadius: 16,
           border: '1px solid #E5E7EB',
@@ -710,119 +996,58 @@ export default function LpAPage() {
                     style={{ width: '100%', padding: '13px 15px', border: '1.5px solid #E5E7EB', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 16, background: '#fff', boxSizing: 'border-box' }}
                   />
                 </div>
+                {infoError && (
+                  <div style={{ color: '#DC2626', fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
+                    {infoError}
+                  </div>
+                )}
                 <button
                   className="lp-btn-grad"
-                  onClick={() => setFormStep('pay')}
+                  onClick={handleContinueToPayment}
+                  disabled={infoLoading}
                   style={{
                     marginTop: 4, width: '100%', padding: 16, border: 'none', borderRadius: 14,
                     background: GRAD, color: '#fff',
                     fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 16,
-                    cursor: 'pointer', boxShadow: '0px 4px 18px rgba(236,72,153,.32)',
+                    cursor: infoLoading ? 'wait' : 'pointer',
+                    opacity: infoLoading ? 0.75 : 1,
+                    boxShadow: '0px 4px 18px rgba(236,72,153,.32)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  Continue to payment
-                  <IconArrow size={18} />
+                  {infoLoading ? 'Saving…' : 'Continue to payment'}
+                  {!infoLoading && <IconArrow size={18} />}
                 </button>
               </div>
             )}
 
-            {/* ── Step 2: Payment + order bump ── */}
+            {/* ── Step 2: Stripe PaymentElement + order bump ── */}
             {formStep === 'pay' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>
-                    Card number
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="1234 1234 1234 1234"
-                    style={{ width: '100%', padding: '13px 15px', border: '1.5px solid #E5E7EB', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 16, background: '#fff', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>
-                      Expiry
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="MM / YY"
-                      style={{ width: '100%', padding: '13px 15px', border: '1.5px solid #E5E7EB', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 16, background: '#fff', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>
-                      CVC
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="123"
-                      style={{ width: '100%', padding: '13px 15px', border: '1.5px solid #E5E7EB', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 16, background: '#fff', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-
-                {/* ORDER BUMP */}
-                <div
-                  onClick={() => setBump(b => !b)}
-                  style={{
-                    cursor: 'pointer',
-                    border: `2px dashed ${bumpBorder}`,
-                    background: bumpBg,
-                    borderRadius: 12, padding: 16,
-                    display: 'flex', gap: 12, alignItems: 'flex-start',
-                    transition: 'all .15s ease',
-                  }}
-                >
-                  <div style={{
-                    width: 24, height: 24, borderRadius: 6,
-                    border: `2px solid ${bumpCheckBorder}`,
-                    background: bumpCheckBg,
-                    flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    marginTop: 2,
-                  }}>
-                    <span style={{ opacity: bump ? 1 : 0 }}>
-                      <IconCheckMini color="#fff" size={15} />
-                    </span>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: '#0A0008' }}>
-                      {COPY.bumpName} —{' '}
-                      <span style={{ color: '#F97316' }}>+{money(BUMP_PRICE)}</span>
-                    </div>
-                    <div style={{ fontSize: 14, color: '#6B7280', marginTop: 3 }}>{COPY.bumpDesc}</div>
-                  </div>
-                </div>
-
-                {/* Complete order CTA */}
-                <button
-                  className="lp-btn-grad"
-                  onClick={handleCompleteOrder}
-                  style={{
-                    marginTop: 4, width: '100%', padding: 18, border: 'none', borderRadius: 14,
-                    background: GRAD, color: '#fff',
-                    fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17,
-                    cursor: 'pointer', boxShadow: '0px 2px 16px rgba(236,72,153,.35)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                  }}
-                >
-                  <IconLock color="#fff" size={19} />
-                  Complete my order — {money(total)}
-                </button>
-
-                <button
-                  onClick={() => setFormStep('info')}
-                  style={{
-                    background: 'none', border: 'none', color: '#9CA3AF',
-                    fontFamily: "'Inter', sans-serif", fontSize: 13,
-                    cursor: 'pointer', padding: 0, textDecoration: 'underline', alignSelf: 'center',
-                  }}
-                >
-                  ← Back to your info
-                </button>
-              </div>
+              <PaymentStepWrapper
+                name={name}
+                email={email}
+                brand={brand}
+                bump={bump}
+                setBump={setBump}
+                total={total}
+                orderId={orderId}
+                setOrderId={setOrderId}
+                clientSecret={clientSecret}
+                setClientSecret={setClientSecret}
+                onBack={() => setFormStep('info')}
+                onSuccess={(oid: string) => {
+                  try {
+                    localStorage.setItem('topk_funnel_order', oid);
+                    localStorage.setItem('topk_funnel_step', JSON.stringify({ step: 'up1', got1: false, gotD1: false }));
+                  } catch (_) { /* storage blocked */ }
+                  track('Purchase', { value: total, currency: 'USD', content_name: 'first-ad', num_items: 1 });
+                  router.push(`/lp/a/oto1?orderId=${oid}`);
+                }}
+                bumpBorder={bumpBorder}
+                bumpBg={bumpBg}
+                bumpCheckBg={bumpCheckBg}
+                bumpCheckBorder={bumpCheckBorder}
+              />
             )}
 
             {/* Trust row */}
@@ -837,7 +1062,7 @@ export default function LpAPage() {
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-                14-day guarantee
+                Love it or it&apos;s free
               </span>
               <span>Visa · Mastercard · Amex</span>
             </div>
@@ -925,7 +1150,7 @@ export default function LpAPage() {
             </h3>
             <ul style={{ listStyle: 'none', padding: 0, margin: '18px 0 0', display: 'flex', flexDirection: 'column', gap: 15 }}>
               {([
-                <>Send a brief. We render your ad with an AI model built to your brand.</>,
+                <>Send a brief. We render your ad with AI, built around your product.</>,
                 <>No casting. No crew. No shoot day. No agency fees. None of it.</>,
                 <>Don&#39;t love it? We revise — <strong style={{ color: '#0A0008' }}>free. Three rounds</strong>, until it&#39;s right.</>,
                 <>It lands in <strong style={{ color: '#0A0008' }}>days, not weeks</strong>. Usually 48 hours.</>,
@@ -947,7 +1172,7 @@ export default function LpAPage() {
             lineHeight: 1.4, letterSpacing: '-0.01em',
             maxWidth: '24ch', margin: '0 auto',
           }}>
-            You write the brief. We do the rest. You only pay if you love it.
+            You write the brief. We do the rest. Don&#39;t love it? Full refund.
           </p>
           <button
             className="lp-btn-grad"
@@ -980,7 +1205,7 @@ export default function LpAPage() {
             Recently shipped — made with AI, live in hours
           </h2>
           <p style={{ fontSize: 17, color: '#6B7280', margin: '14px 0 0' }}>
-            Sample ads rendered with our AI models — concept to cut. No studio. No crew. Just a brief.
+            Real ads we made with AI — concept to cut. No studio. No crew. Just a brief.
           </p>
         </div>
 
@@ -1044,39 +1269,6 @@ export default function LpAPage() {
           <div style={{ marginTop: 10, fontSize: 13, color: '#9CA3AF' }}>
             15-sec vertical ad · music + captions · 3 free revisions · 48-hour delivery · love it or it&apos;s free.
           </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS — PLACEHOLDER ───────────────────────── */}
-      {/* TODO: replace with real consented quotes before launch */}
-      <section style={{ maxWidth: 880, margin: '0 auto', padding: '52px 24px 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-          {TESTIMONIALS.map((t, i) => (
-            <div key={i} style={{
-              background: '#FFFFFF', borderRadius: 16,
-              border: '1px solid #E5E7EB', boxShadow: '0px 4px 24px rgba(0,0,0,.06)',
-              padding: 24,
-            }}>
-              <div style={{ display: 'flex', gap: 3, marginBottom: 12 }}>
-                {[0,1,2,3,4].map(s => <StarFill key={s} size={16} />)}
-              </div>
-              <p style={{ margin: 0, color: '#0A0008', fontSize: 15, lineHeight: 1.55 }}>{t.quote}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 16 }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: 'linear-gradient(135deg,#F97316,#8B5CF6)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15,
-                }}>
-                  {t.initial}
-                </div>
-                <div>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 14 }}>{t.name}</div>
-                  <div style={{ fontSize: 13, color: '#9CA3AF' }}>{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -1151,7 +1343,7 @@ export default function LpAPage() {
             in days — not weeks. Don&#39;t love it? We revise it free, up to three rounds, until it&#39;s right.
           </p>
           <p style={{ color: '#9CA3AF', fontSize: 17, lineHeight: 1.7, maxWidth: '50ch', margin: '14px auto 28px' }}>
-            And if it still isn&#39;t scroll-stopping? You don&#39;t pay a cent — and you keep the files anyway.
+            And if it still isn&#39;t scroll-stopping? You get every cent back — and you keep the files anyway.
             No invoice for thousands. No shoot day. No risk on your side. Just one great ad — $49, Save $100 off the regular $149.
           </p>
           <button

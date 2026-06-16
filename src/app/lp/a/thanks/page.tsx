@@ -225,6 +225,22 @@ export default function ThanksPage() {
           </div>
         )}
 
+        {/* Next-rung invite (soft — the value ladder continues here, no checkout) */}
+        <div style={{
+          background: '#FFFFFF', borderRadius: 16,
+          border: '1px solid #E5E7EB', boxShadow: '0px 4px 24px rgba(0,0,0,.06)',
+          padding: '22px 26px', marginTop: 20, textAlign: 'left',
+        }}>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17, color: '#0A0008', marginBottom: 6 }}>
+            Want fresh ads in the feed every week?
+          </div>
+          <div style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.65 }}>
+            Most brands don&apos;t stop at one. When your first ad lands, just reply to that email and ask about{' '}
+            <strong style={{ color: '#0A0008' }}>TopK Autopilot</strong> — a steady stream of new ads each month so your
+            brand never goes quiet. No commitment now; we&apos;ll show you how it works after you see your first ad.
+          </div>
+        </div>
+
         {/* Closing line */}
         <p style={{ fontSize: 16, color: '#6B7280', marginTop: 32, lineHeight: 1.7 }}>
           Keep an eye on your inbox — the faster you send your photos, the faster your brand becomes
