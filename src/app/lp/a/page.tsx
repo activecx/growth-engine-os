@@ -788,35 +788,6 @@ export default function LpAPage() {
         <p style={{ fontSize: 20, color: '#6B7280', maxWidth: '56ch', margin: '20px auto 0' }}>
           {COPY.subhead}
         </p>
-
-        {/* Primary CTA — above the fold so visitors never have to watch 6 min to act */}
-        <button
-          className="lp-btn-grad"
-          onClick={scrollToOrder}
-          style={{
-            marginTop: 26, padding: '17px 38px', border: 'none', borderRadius: 14,
-            background: GRAD, color: '#fff',
-            fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17,
-            cursor: 'pointer', boxShadow: '0px 4px 18px rgba(236,72,153,.34)',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-          }}
-        >
-          Get my first ad — {money(BASE_PRICE)}
-          <IconArrow size={18} />
-        </button>
-
-        {/* Trust signal — stars + the real brands whose ads ARE the proof */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 9, marginTop: 16, flexWrap: 'wrap',
-        }}>
-          <span style={{ display: 'inline-flex', gap: 2 }}>
-            {[0,1,2,3,4].map(s => <StarFill key={s} size={16} />)}
-          </span>
-          <span style={{ fontSize: 14, color: '#6B7280', fontWeight: 500 }}>
-            Real ads we&#39;ve shipped for Stylex · Casio · Askim · Gucci · iPhone
-          </span>
-        </div>
       </section>
 
       {/* ── VSL PLAYER ───────────────────────────────────────── */}
@@ -892,25 +863,41 @@ export default function LpAPage() {
         </div>
       </section>
 
+      {/* ── CTA + trust — directly BELOW the video (per Zaid) ──── */}
+      <section style={{ maxWidth: 760, margin: '0 auto', padding: '30px 24px 0', textAlign: 'center' }}>
+        <button
+          className="lp-btn-grad"
+          onClick={scrollToOrder}
+          style={{
+            padding: '17px 40px', border: 'none', borderRadius: 14,
+            background: GRAD, color: '#fff',
+            fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18,
+            cursor: 'pointer', boxShadow: '0px 4px 18px rgba(236,72,153,.34)',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+          }}
+        >
+          Get my first ad — {money(BASE_PRICE)}
+          <IconArrow size={18} />
+        </button>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 9, marginTop: 16, flexWrap: 'wrap',
+        }}>
+          <span style={{ display: 'inline-flex', gap: 2 }}>
+            {[0,1,2,3,4].map(s => <StarFill key={s} size={16} />)}
+          </span>
+          <span style={{ fontSize: 14, color: '#6B7280', fontWeight: 500 }}>
+            Real ads we&#39;ve shipped for Stylex · Casio · Askim · Gucci · iPhone
+          </span>
+        </div>
+      </section>
+
       {/* ── 2-STEP ORDER FORM ────────────────────────────────── */}
       <section
         id="order-form"
         ref={orderRef}
         style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px 8px', scrollMarginTop: 80 }}
       >
-        {/* Proof beside the ask — the same AI ads we ship for real brands */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 9, marginBottom: 16, flexWrap: 'wrap', textAlign: 'center',
-        }}>
-          <span style={{ display: 'inline-flex', gap: 2 }}>
-            {[0,1,2,3,4].map(s => <StarFill key={s} size={15} />)}
-          </span>
-          <span style={{ fontSize: 14, color: '#6B7280', fontWeight: 500 }}>
-            The same AI ads we make for Stylex, Casio &amp; Askim — now for your product.
-          </span>
-        </div>
-
         <div style={{
           background: '#FFFFFF', borderRadius: 16,
           border: '1px solid #E5E7EB',
