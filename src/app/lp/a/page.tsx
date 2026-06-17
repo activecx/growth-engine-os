@@ -381,6 +381,7 @@ interface StripePaymentStepProps {
   name: string;
   email: string;
   brand: string;
+  whatsapp: string;
   bump: boolean;
   setBump: (v: boolean) => void;
   total: number;
@@ -397,7 +398,7 @@ interface StripePaymentStepProps {
 }
 
 function StripePaymentStep({
-  name, email, brand, bump, setBump, total,
+  name, email, brand, whatsapp, bump, setBump, total,
   orderId, setOrderId, clientSecret, setClientSecret,
   onBack, onSuccess,
   bumpBorder, bumpBg, bumpCheckBg, bumpCheckBorder,
@@ -440,7 +441,7 @@ function StripePaymentStep({
       res = await fetch('/api/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, brand, bump, paymentMethodId: paymentMethod.id }),
+        body: JSON.stringify({ name, email, brand, whatsapp, bump, paymentMethodId: paymentMethod.id }),
       });
     } catch {
       setPayError('Network error — please try again.');
@@ -638,6 +639,7 @@ export default function LpAPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [brand, setBrand] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
 
   /* ── Stripe payment intent client secret ─────────────────── */
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -689,7 +691,7 @@ export default function LpAPage() {
     fetch('/api/lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, brand }),
+      body: JSON.stringify({ name, email, brand, whatsapp }),
     }).catch(() => { /* non-fatal */ });
 
     // Meta Pixel: lead captured + checkout started
@@ -973,6 +975,19 @@ export default function LpAPage() {
                 </div>
                 <div>
                   <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>
+                    WhatsApp number{' '}
+                    <span style={{ color: '#9CA3AF', fontWeight: 500 }}>(optional — fastest way to send you your ad)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+962 79 000 0000"
+                    value={whatsapp}
+                    onChange={e => setWhatsapp(e.target.value)}
+                    style={{ width: '100%', padding: '13px 15px', border: '1.5px solid #E5E7EB', borderRadius: 10, fontFamily: "'Inter', sans-serif", fontSize: 16, background: '#fff', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13, display: 'block', marginBottom: 6 }}>
                     Brand / website
                   </label>
                   <input
@@ -1014,6 +1029,7 @@ export default function LpAPage() {
                 name={name}
                 email={email}
                 brand={brand}
+                whatsapp={whatsapp}
                 bump={bump}
                 setBump={setBump}
                 total={total}

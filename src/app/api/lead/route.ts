@@ -3,7 +3,7 @@
  * Called at step 1 (name/email/brand collected) BEFORE the card form.
  * Creates a Zoho CRM lead so the email is captured even if the customer abandons.
  *
- * Body: { name: string; email: string; brand: string }
+ * Body: { name: string; email: string; brand: string; whatsapp?: string }
  * Response: { ok: true } | { error: string }
  */
 
@@ -12,17 +12,18 @@ import { createZohoLead } from '@/lib/zoho';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { name?: string; email?: string; brand?: string };
+    const body = await req.json() as { name?: string; email?: string; brand?: string; whatsapp?: string };
 
     const name = (body.name ?? '').trim();
     const email = (body.email ?? '').trim().toLowerCase();
     const brand = (body.brand ?? '').trim();
+    const whatsapp = (body.whatsapp ?? '').trim();
 
     if (!email) {
       return NextResponse.json({ error: 'email is required' }, { status: 400 });
     }
 
-    await createZohoLead({ name, email, brand });
+    await createZohoLead({ name, email, brand, whatsapp: whatsapp || undefined });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
