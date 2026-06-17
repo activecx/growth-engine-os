@@ -3,7 +3,7 @@
  * Creates a Stripe Customer + PaymentIntent, persists the order in Neon.
  * Called from the payment step of /lp/a when the user submits the card.
  *
- * Body: { name, email, brand, bump, paymentMethodId }
+ * Body: { name, email, brand, whatsapp?, bump, paymentMethodId }
  *   paymentMethodId — collected from the Stripe PaymentElement on the client
  *
  * Response: { clientSecret: string; orderId: string } on success
@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { sql, initOrdersTable } from '@/lib/neon';
 import { updateZohoLead } from '@/lib/zoho';
+import { sendOrderNotification } from '@/lib/email';
 
 const BASE_PRICE_CENTS = 4900;   // $49.00
 const BUMP_PRICE_CENTS  = 2700;  // $27.00
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
       name?: string;
       email?: string;
       brand?: string;
+      whatsapp?: string;
       bump?: boolean;
       paymentMethodId?: string;
     };
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest) {
     const name  = (body.name  ?? '').trim();
     const email = (body.email ?? '').trim().toLowerCase();
     const brand = (body.brand ?? '').trim();
+    const whatsapp = (body.whatsapp ?? '').trim();
     const bump  = body.bump === true;
     const paymentMethodId = (body.paymentMethodId ?? '').trim();
 
@@ -44,7 +47,12 @@ export async function POST(req: NextRequest) {
 
     // 2. Create Stripe Customer
     const customer = await stripe.customers.create(
-      { name: name || undefined, email, metadata: { brand } },
+      {
+        name: name || undefined,
+        email,
+        phone: whatsapp || undefined,
+        metadata: { brand, whatsapp },
+      },
       { idempotencyKey: `cust-${email}-${Date.now()}` }
     );
 
@@ -79,10 +87,10 @@ export async function POST(req: NextRequest) {
     const rows = await sql`
       INSERT INTO orders
         (stripe_customer_id, stripe_payment_method_id, stripe_payment_intent_id,
-         email, brand, name, amount_cents, bump, upsells, paid)
+         email, brand, name, whatsapp, amount_cents, bump, upsells, paid)
       VALUES
         (${customer.id}, ${paymentMethodId}, ${paymentIntent.id},
-         ${email}, ${brand}, ${name}, ${amountCents}, ${bump}, '[]'::jsonb, false)
+         ${email}, ${brand}, ${name}, ${whatsapp || null}, ${amountCents}, ${bump}, '[]'::jsonb, false)
       RETURNING id
     `;
 
@@ -93,7 +101,16 @@ export async function POST(req: NextRequest) {
       console.error('[/api/order] Zoho update failed (non-fatal):', e)
     );
 
-    // 8. Return clientSecret so the client can confirm if needed (3DS), plus orderId
+    // 8. Notify Zaid the instant the payment clears (non-fatal).
+    //    On 3DS (requires_action) the webhook is the source of truth for "paid",
+    //    so we only fire the synchronous alert when the PI already succeeded.
+    if (paymentIntent.status === 'succeeded') {
+      sendOrderNotification({
+        orderId, name, email, whatsapp, brand, amountCents, bump,
+      }).catch(e => console.error('[/api/order] order email failed (non-fatal):', e));
+    }
+
+    // 9. Return clientSecret so the client can confirm if needed (3DS), plus orderId
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       orderId,

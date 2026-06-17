@@ -44,6 +44,18 @@ export async function initOrdersTable(): Promise<void> {
       created_at               TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `;
+
+  // ── Contact + creative-brief columns (added idempotently so existing
+  //    deployments upgrade in place). whatsapp is captured at checkout;
+  //    the rest are filled in by the brief form on the thank-you page. ──
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS whatsapp        TEXT`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_name    TEXT`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_url     TEXT`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS video_format    TEXT`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS brief_notes     TEXT`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS photo_urls      JSONB   NOT NULL DEFAULT '[]'::jsonb`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS brief_completed BOOLEAN NOT NULL DEFAULT false`;
+  await client`ALTER TABLE orders ADD COLUMN IF NOT EXISTS brief_at        TIMESTAMPTZ`;
 }
 
 export type Order = {
@@ -59,4 +71,13 @@ export type Order = {
   upsells: string[];
   paid: boolean;
   created_at: string;
+  // contact + brief
+  whatsapp: string | null;
+  product_name: string | null;
+  product_url: string | null;
+  video_format: string | null;
+  brief_notes: string | null;
+  photo_urls: string[];
+  brief_completed: boolean;
+  brief_at: string | null;
 };
