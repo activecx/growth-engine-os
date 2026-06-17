@@ -14,9 +14,13 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const NOTIFY_TO = process.env.ORDER_NOTIFY_EMAIL || 'zaidsarhan@gmail.com';
 
 function fromAddress(): string {
-  const raw = process.env.RESEND_FROM || 'sales@send.topk.agency';
+  // These are INTERNAL order/brief alerts. Default to Resend's shared sender,
+  // which delivers to the Resend account owner with no domain verification.
+  // Once send.topk.agency is verified in Resend, set ORDER_NOTIFY_FROM to a
+  // branded address, e.g. "TopK Orders <orders@send.topk.agency>".
+  const raw = process.env.ORDER_NOTIFY_FROM || 'TopK Orders <onboarding@resend.dev>';
   // Accept either "addr@domain" or "Name <addr@domain>"
-  return raw.includes('<') ? raw : `TopK <${raw}>`;
+  return raw.includes('<') ? raw : `TopK Orders <${raw}>`;
 }
 
 interface SendArgs {
