@@ -6,16 +6,19 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      // beforeFiles: checked before filesystem routes — shadows src/app/page.tsx at root
-      beforeFiles: [
-        // Root "/" serves the funnel landing (URL stays "/")
-        {
-          source: "/",
-          destination: "/lp/a",
-        },
-      ],
+      beforeFiles: [],
       // afterFiles: checked after filesystem routes (existing aliases)
       afterFiles: [
+        // /ai-videos → /lp/a  (URL stays /ai-videos)
+        {
+          source: "/ai-videos",
+          destination: "/lp/a",
+        },
+        // /ai-videos/:path* → /lp/a/:path*  (upsell flow: oto1, down1, thanks)
+        {
+          source: "/ai-videos/:path*",
+          destination: "/lp/a/:path*",
+        },
         // /video-services → /lp/a  (URL stays /video-services)
         {
           source: "/video-services",
