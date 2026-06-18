@@ -12,6 +12,8 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { track } from '@/lib/track';
+import { buildInitialElementsOptions } from '@/lib/checkout';
+import { submitInitialPayment } from '@/lib/checkout-client';
 
 /* ─── Stripe singleton (loaded once) ──────────────────────── */
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -419,77 +421,48 @@ function StripePaymentStep({
     setPayError(null);
     setPaying(true);
 
-    // 1. Submit elements (validates card locally)
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setPayError(submitError.message ?? 'Card error');
-      setPaying(false);
-      return;
-    }
+    const result = await submitInitialPayment({
+      stripe,
+      elements,
+      order: { name, email, brand, whatsapp, bump },
+      returnUrl: `${window.location.origin}/lp/a/oto1`,
+      createOrder: async (body) => {
+        let res: Response;
+        try {
+          res = await fetch('/api/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        } catch {
+          return { error: 'Network error - please try again.' };
+        }
 
-    // 2. Create a PaymentMethod from the Element
-    const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({ elements });
-    if (pmError || !paymentMethod) {
-      setPayError(pmError?.message ?? 'Could not create payment method');
-      setPaying(false);
-      return;
-    }
+        const data = await res.json() as {
+          clientSecret?: string;
+          orderId?: string;
+          status?: string;
+          error?: string;
+        };
 
-    // 3. POST /api/order — creates Customer + PaymentIntent on the server
-    let res: Response;
-    try {
-      res = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, brand, whatsapp, bump, paymentMethodId: paymentMethod.id }),
-      });
-    } catch {
-      setPayError('Network error — please try again.');
-      setPaying(false);
-      return;
-    }
+        if (!res.ok || data.error) {
+          return { error: data.error ?? 'Payment failed - please try again.' };
+        }
 
-    const data = await res.json() as {
-      clientSecret?: string;
-      orderId?: string;
-      status?: string;
-      error?: string;
-    };
-
-    if (!res.ok || data.error) {
-      setPayError(data.error ?? 'Payment failed — please try again.');
-      setPaying(false);
-      return;
-    }
-
-    setOrderId(data.orderId!);
-    setClientSecret(data.clientSecret!);
-
-    // 4. If already succeeded (no 3DS), navigate immediately
-    if (data.status === 'succeeded') {
-      setPaying(false);
-      onSuccess(data.orderId!);
-      return;
-    }
-
-    // 5. Otherwise confirm (handles 3DS redirect flow)
-    const { error: confirmError } = await stripe.confirmPayment({
-      clientSecret: data.clientSecret!,
-      confirmParams: {
-        return_url: `${window.location.origin}/lp/a/oto1?orderId=${data.orderId}`,
+        return data;
       },
-      redirect: 'if_required',
     });
 
-    if (confirmError) {
-      setPayError(confirmError.message ?? 'Payment failed');
+    if (!result.ok) {
+      setPayError(result.error);
       setPaying(false);
       return;
     }
 
-    // Payment succeeded without redirect
+    setOrderId(result.orderId);
+    setClientSecret(result.clientSecret);
     setPaying(false);
-    onSuccess(data.orderId!);
+    onSuccess(result.orderId);
   }
 
   return (
@@ -583,21 +556,7 @@ function StripePaymentStep({
 
 /* ─── Wrapper that mounts Elements only when on the pay step ── */
 function PaymentStepWrapper(props: StripePaymentStepProps) {
-  // We mount Elements with a minimal amount so the PaymentElement can render.
-  // The real amount is set server-side in /api/order.
-  const options = {
-    mode: 'payment' as const,
-    amount: (BASE_PRICE + (props.bump ? BUMP_PRICE : 0)) * 100,
-    currency: 'usd',
-    appearance: {
-      theme: 'stripe' as const,
-      variables: {
-        colorPrimary: '#F97316',
-        borderRadius: '10px',
-        fontFamily: 'Inter, sans-serif',
-      },
-    },
-  };
+  const options = buildInitialElementsOptions((BASE_PRICE + (props.bump ? BUMP_PRICE : 0)) * 100);
 
   return (
     <Elements stripe={stripePromise} options={options}>

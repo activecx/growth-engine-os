@@ -1,7 +1,6 @@
 /**
  * POST /api/stripe/webhook
- * Verifies the Stripe signature and processes payment events.
- * This is the source of truth for marking orders paid.
+ * Verifies Stripe events and marks paid orders in Neon.
  *
  * Forward locally:
  *   stripe listen --forward-to localhost:3002/api/stripe/webhook
@@ -12,9 +11,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { sql } from '@/lib/neon';
+import { sendOrderNotification } from '@/lib/email';
 
-// Required: tell Next.js not to parse the body — Stripe needs the raw bytes
-export const config = { api: { bodyParser: false } };
+type PaidOrderRow = {
+  id: string;
+  name: string | null;
+  email: string;
+  whatsapp: string | null;
+  brand: string | null;
+  amount_cents: number;
+  bump: boolean;
+};
+
+function paymentMethodIdFromIntent(pi: Stripe.PaymentIntent): string | null {
+  if (!pi.payment_method) return null;
+  return typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method.id;
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -43,27 +55,42 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const piId = pi.id;
+        const paymentMethodId = paymentMethodIdFromIntent(pi);
 
-        // Mark the main order paid when the initial PI succeeds
-        await sql`
+        const rows = await sql`
           UPDATE orders
-          SET paid = true
-          WHERE stripe_payment_intent_id = ${piId}
+          SET
+            paid = true,
+            stripe_payment_method_id = COALESCE(${paymentMethodId}, stripe_payment_method_id)
+          WHERE stripe_payment_intent_id = ${pi.id}
+            AND paid = false
+          RETURNING id, name, email, whatsapp, brand, amount_cents, bump
         `;
 
-        console.log(`[webhook] payment_intent.succeeded — PI ${piId} marked paid`);
+        const order = rows[0] as PaidOrderRow | undefined;
+        if (order) {
+          sendOrderNotification({
+            orderId: order.id,
+            name: order.name ?? '',
+            email: order.email,
+            whatsapp: order.whatsapp ?? '',
+            brand: order.brand ?? '',
+            amountCents: order.amount_cents,
+            bump: order.bump,
+          }).catch(e => console.error('[webhook] order email failed (non-fatal):', e));
+        }
+
+        console.log(`[webhook] payment_intent.succeeded - PI ${pi.id} marked paid`);
         break;
       }
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        console.warn(`[webhook] payment_intent.payment_failed — PI ${pi.id}, reason: ${pi.last_payment_error?.message ?? 'unknown'}`);
+        console.warn(`[webhook] payment_intent.payment_failed - PI ${pi.id}, reason: ${pi.last_payment_error?.message ?? 'unknown'}`);
         break;
       }
 
       default:
-        // Unhandled event types — ignore silently
         break;
     }
   } catch (err) {
