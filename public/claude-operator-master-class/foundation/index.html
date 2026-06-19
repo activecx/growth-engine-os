@@ -56,26 +56,48 @@
           d.dispatchEvent(new KeyboardEvent('keyup', opts));
         } catch (e) {}
       }
-      // Left-click anywhere on the slide = next (PowerPoint-style), but only while presenting,
-      // and never when the click lands on a real link / button / input inside the deck.
-      function onDeckClick(e) {
-        if (!presenting) return;
-        if (e.button !== 0) return;
+      // Step the deck back by replaying its own "previous" key (ArrowLeft).
+      function deckPrev() {
+        try {
+          var d = deck.contentDocument || deck.contentWindow.document;
+          var opts = { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37, which: 37, bubbles: true };
+          d.dispatchEvent(new KeyboardEvent('keydown', opts));
+          d.dispatchEvent(new KeyboardEvent('keyup', opts));
+        } catch (e) {}
+      }
+      // True when the clicked target (or an ancestor) is an interactive element we must not hijack.
+      function isInteractive(e) {
         var t = e.target;
         while (t && t !== e.currentTarget) {
           var tag = (t.tagName || '').toLowerCase();
           if (tag === 'a' || tag === 'button' || tag === 'input' ||
               tag === 'select' || tag === 'textarea' || tag === 'label' ||
-              t.isContentEditable) return;
+              t.isContentEditable) return true;
           t = t.parentNode;
         }
+        return false;
+      }
+      // Left-click anywhere on the slide = next (PowerPoint-style), only while presenting,
+      // and never when the click lands on a real link / button / input inside the deck.
+      function onDeckClick(e) {
+        if (!presenting || e.button !== 0) return;
+        if (isInteractive(e)) return;
         deckNext();
+      }
+      // Right-click anywhere = previous; suppress the browser context menu while presenting.
+      function onDeckContextMenu(e) {
+        if (!presenting) return;
+        e.preventDefault();
+        if (isInteractive(e)) return;
+        deckPrev();
       }
       function wireDeckClicks() {
         try {
           var d = deck.contentDocument || deck.contentWindow.document;
           d.removeEventListener('click', onDeckClick, true);
           d.addEventListener('click', onDeckClick, true);
+          d.removeEventListener('contextmenu', onDeckContextMenu, true);
+          d.addEventListener('contextmenu', onDeckContextMenu, true);
         } catch (e) {}
       }
       deck.addEventListener('load', function () { wireDeckClicks(); deck.contentWindow.focus(); });
@@ -110,6 +132,12 @@
       document.addEventListener('fullscreenchange', function () { onFsChange(!!document.fullscreenElement); });
       document.addEventListener('webkitfullscreenchange', function () { onFsChange(!!document.webkitFullscreenElement); });
       document.addEventListener('click', function (e) { if (e.target !== btn) deck.contentWindow.focus(); });
+      // Wrapper-level right-click (e.g. iframe edges) = previous while presenting; no context menu.
+      document.addEventListener('contextmenu', function (e) {
+        if (!presenting) return;
+        e.preventDefault();
+        if (e.target !== btn) deckPrev();
+      });
     })();
   </script>
 </body>
