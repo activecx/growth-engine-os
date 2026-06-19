@@ -45,10 +45,44 @@
       var deck = document.getElementById('deck');
       var btn  = document.getElementById('present-btn');
       var presenting = false;
-      deck.addEventListener('load', function () { deck.contentWindow.focus(); });
+
+      // Advance the deck by replaying its own "next" key (ArrowRight) into the iframe document.
+      // Reuses the deck's native navigation instead of touching the (un-editable) bundle.
+      function deckNext() {
+        try {
+          var d = deck.contentDocument || deck.contentWindow.document;
+          var opts = { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, which: 39, bubbles: true };
+          d.dispatchEvent(new KeyboardEvent('keydown', opts));
+          d.dispatchEvent(new KeyboardEvent('keyup', opts));
+        } catch (e) {}
+      }
+      // Left-click anywhere on the slide = next (PowerPoint-style), but only while presenting,
+      // and never when the click lands on a real link / button / input inside the deck.
+      function onDeckClick(e) {
+        if (!presenting) return;
+        if (e.button !== 0) return;
+        var t = e.target;
+        while (t && t !== e.currentTarget) {
+          var tag = (t.tagName || '').toLowerCase();
+          if (tag === 'a' || tag === 'button' || tag === 'input' ||
+              tag === 'select' || tag === 'textarea' || tag === 'label' ||
+              t.isContentEditable) return;
+          t = t.parentNode;
+        }
+        deckNext();
+      }
+      function wireDeckClicks() {
+        try {
+          var d = deck.contentDocument || deck.contentWindow.document;
+          d.removeEventListener('click', onDeckClick, true);
+          d.addEventListener('click', onDeckClick, true);
+        } catch (e) {}
+      }
+      deck.addEventListener('load', function () { wireDeckClicks(); deck.contentWindow.focus(); });
 
       function enterPresent() {
         presenting = true; btn.textContent = 'Exit';
+        wireDeckClicks();
         try { deck.contentWindow.postMessage({ __omelette_presenting: true }, '*'); } catch (e) {}
         try {
           var el = deck;

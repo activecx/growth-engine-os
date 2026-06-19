@@ -1,4 +1,19 @@
 <!DOCTYPE html>
+<!--
+  ZAIDRONIC STANDARD PRESENT WRAPPER (reusable)
+  ------------------------------------------------
+  Hosts any Claude Design export deck with a Present button + fullscreen + nav,
+  WITHOUT ever editing the deck's bundle (editing the bundle breaks it → "[bundle] error").
+
+  To use for a new deck:
+    1. Put the pristine Claude Design export at:  public/<slug>/deck.html   (NEVER edit it)
+    2. Copy this file to:                          public/<slug>/index.html
+    3. Replace /claude-operator-pitch/deck.html → /<slug>/deck.html   and   The Claude Operator → the deck title
+    4. Add a Next.js rewrite:  { source: "/<slug>", destination: "/<slug>/index.html" }
+    5. COMMIT both files + the rewrite to git (so the GitHub build includes them), then deploy.
+
+  Controls: Present button or P = present mode (fullscreen + hide rail) · ←/→/Space = nav · F = fullscreen · Esc = exit.
+-->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -9,155 +24,93 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #06041A; overflow: hidden; }
-
-    #deck {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
+    #deck { position: fixed; inset: 0; width: 100%; height: 100%; border: none; }
     #present-btn {
-      position: fixed;
-      top: 14px;
-      right: 16px;
-      z-index: 9999;
-      padding: 8px 18px;
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 8px;
+      position: fixed; top: 14px; right: 16px; z-index: 9999;
+      padding: 8px 18px; background: rgba(255,255,255,0.12); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25); border-radius: 8px;
       font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      transition: background 0.15s, opacity 0.15s;
-      letter-spacing: 0.03em;
+      cursor: pointer; backdrop-filter: blur(8px);
+      transition: background 0.15s, opacity 0.15s; letter-spacing: 0.03em;
     }
     #present-btn:hover { background: rgba(255,255,255,0.22); }
-
-    /* hide button in true fullscreen */
-    :fullscreen #present-btn,
-    :-webkit-full-screen #present-btn { display: none; }
+    :fullscreen #present-btn, :-webkit-full-screen #present-btn { display: none; }
   </style>
 </head>
 <body>
-
-  <iframe
-    id="deck"
-    src="/claude-operator-pitch/deck.html"
-    allowfullscreen
-    allow="fullscreen"
-    title="The Claude Operator deck"
-  ></iframe>
-
+  <iframe id="deck" src="/claude-operator-pitch/deck.html" allowfullscreen allow="fullscreen" title="The Claude Operator"></iframe>
   <button id="present-btn" title="Enter present mode (P)">Present</button>
-
   <script>
     (function () {
       var deck = document.getElementById('deck');
       var btn  = document.getElementById('present-btn');
       var presenting = false;
 
-      // Focus iframe on load so arrow keys reach it immediately
-      deck.addEventListener('load', function () {
-        deck.contentWindow.focus();
-      });
+      // Advance the deck by replaying its own "next" key (ArrowRight) into the iframe document.
+      // Reuses the deck's native navigation instead of touching the (un-editable) bundle.
+      function deckNext() {
+        try {
+          var d = deck.contentDocument || deck.contentWindow.document;
+          var opts = { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, which: 39, bubbles: true };
+          d.dispatchEvent(new KeyboardEvent('keydown', opts));
+          d.dispatchEvent(new KeyboardEvent('keyup', opts));
+        } catch (e) {}
+      }
+      // Left-click anywhere on the slide = next (PowerPoint-style), but only while presenting,
+      // and never when the click lands on a real link / button / input inside the deck.
+      function onDeckClick(e) {
+        if (!presenting) return;
+        if (e.button !== 0) return;
+        var t = e.target;
+        while (t && t !== e.currentTarget) {
+          var tag = (t.tagName || '').toLowerCase();
+          if (tag === 'a' || tag === 'button' || tag === 'input' ||
+              tag === 'select' || tag === 'textarea' || tag === 'label' ||
+              t.isContentEditable) return;
+          t = t.parentNode;
+        }
+        deckNext();
+      }
+      function wireDeckClicks() {
+        try {
+          var d = deck.contentDocument || deck.contentWindow.document;
+          d.removeEventListener('click', onDeckClick, true);
+          d.addEventListener('click', onDeckClick, true);
+        } catch (e) {}
+      }
+      deck.addEventListener('load', function () { wireDeckClicks(); deck.contentWindow.focus(); });
 
       function enterPresent() {
-        presenting = true;
-        btn.textContent = 'Exit';
-
-        // Tell the deck to hide its slide rail / nav chrome
+        presenting = true; btn.textContent = 'Exit';
+        wireDeckClicks();
+        try { deck.contentWindow.postMessage({ __omelette_presenting: true }, '*'); } catch (e) {}
         try {
-          deck.contentWindow.postMessage({ __omelette_presenting: true }, '*');
+          var el = deck;
+          if (el.requestFullscreen) el.requestFullscreen();
+          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         } catch (e) {}
-
-        // Go fullscreen on the iframe element itself
-        var el = deck;
-        try {
-          if (el.requestFullscreen) {
-            el.requestFullscreen();
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          }
-        } catch (e) {}
-
         deck.contentWindow.focus();
       }
-
       function exitPresent() {
-        presenting = false;
-        btn.textContent = 'Present';
-
-        // Tell the deck to restore its nav chrome
+        presenting = false; btn.textContent = 'Present';
+        try { deck.contentWindow.postMessage({ __omelette_presenting: false }, '*'); } catch (e) {}
         try {
-          deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         } catch (e) {}
-
-        // Exit fullscreen if active
-        try {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          }
-        } catch (e) {}
-
         deck.contentWindow.focus();
       }
-
-      btn.addEventListener('click', function () {
-        if (presenting) {
-          exitPresent();
-        } else {
-          enterPresent();
-        }
-      });
-
-      // P key to enter present mode
+      btn.addEventListener('click', function () { presenting ? exitPresent() : enterPresent(); });
       document.addEventListener('keydown', function (e) {
-        if (e.target === deck) return; // let deck handle it when focused
-        if ((e.key === 'p' || e.key === 'P') && !e.metaKey && !e.ctrlKey && !e.altKey) {
-          if (!presenting) enterPresent();
-          e.preventDefault();
-        }
-        if (e.key === 'Escape' && presenting) {
-          exitPresent();
-          e.preventDefault();
-        }
+        if (e.target === deck) return;
+        if ((e.key === 'p' || e.key === 'P') && !e.metaKey && !e.ctrlKey && !e.altKey) { if (!presenting) enterPresent(); e.preventDefault(); }
+        if (e.key === 'Escape' && presenting) { exitPresent(); e.preventDefault(); }
       });
-
-      // Sync presenting state when fullscreen exits via Esc
-      document.addEventListener('fullscreenchange', function () {
-        if (!document.fullscreenElement && presenting) {
-          presenting = false;
-          btn.textContent = 'Present';
-          try {
-            deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
-          } catch (e) {}
-          deck.contentWindow.focus();
-        }
-      });
-      document.addEventListener('webkitfullscreenchange', function () {
-        if (!document.webkitFullscreenElement && presenting) {
-          presenting = false;
-          btn.textContent = 'Present';
-          try {
-            deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
-          } catch (e) {}
-          deck.contentWindow.focus();
-        }
-      });
-
-      // Re-focus iframe on click so arrow keys keep reaching it
-      document.addEventListener('click', function (e) {
-        if (e.target !== btn) {
-          deck.contentWindow.focus();
-        }
-      });
+      function onFsChange(active) { if (!active && presenting) { presenting = false; btn.textContent = 'Present'; try { deck.contentWindow.postMessage({ __omelette_presenting: false }, '*'); } catch (e) {} deck.contentWindow.focus(); } }
+      document.addEventListener('fullscreenchange', function () { onFsChange(!!document.fullscreenElement); });
+      document.addEventListener('webkitfullscreenchange', function () { onFsChange(!!document.webkitFullscreenElement); });
+      document.addEventListener('click', function (e) { if (e.target !== btn) deck.contentWindow.focus(); });
     })();
   </script>
-
 </body>
 </html>
