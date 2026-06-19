@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!--
+  THE CLAUDE OPERATOR MASTER CLASS — HUB
+  Branded front door. 5 cards: the pitch (overview) + the 4 Part decks.
+  Each card links to a route that hosts a pristine Claude Design deck via the standard Present wrapper.
+  Built by the Zaidronic AI Agent for Zaid Sarhan.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <title>The Claude Operator Master Class</title>
+  <style>
+    :root{
+      --bg:#06041A; --bg2:#0C0824; --card:#140F33; --card2:#1B1442;
+      --ink:#F4F2FF; --muted:#A99FD6; --line:rgba(255,255,255,.10);
+      --violet:#8B5CF6; --violet2:#6D28D9; --cyan:#22D3EE; --pink:#EC4899;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      background:
+        radial-gradient(1100px 620px at 18% -8%, rgba(139,92,246,.22), transparent 60%),
+        radial-gradient(900px 560px at 100% 0%, rgba(34,211,238,.14), transparent 55%),
+        radial-gradient(800px 600px at 50% 120%, rgba(236,72,153,.12), transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tajawal,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      display:flex; flex-direction:column; align-items:center;
+      padding:72px 24px 64px;
+    }
+    .wrap{width:100%;max-width:1080px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--cyan);font-weight:700;margin-bottom:18px;
+      border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+      background:rgba(255,255,255,.03);
+    }
+    .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;
+      background:var(--cyan);box-shadow:0 0 12px 2px var(--cyan)}
+    h1{
+      font-size:clamp(34px,6vw,60px);line-height:1.04;font-weight:800;
+      letter-spacing:-.02em;margin-bottom:16px;
+      background:linear-gradient(100deg,#fff 0%,#D9CDFF 45%,#9F8BFF 100%);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .lede{font-size:clamp(15px,2.2vw,19px);color:var(--muted);max-width:680px;line-height:1.6}
+    .ar{direction:rtl;font-size:17px;color:#CFC6F2;margin-top:10px;opacity:.92}
+
+    .grid{
+      margin-top:44px;display:grid;gap:18px;
+      grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+    }
+    /* feature/pitch card spans full width on top */
+    .feature{grid-column:1/-1}
+
+    a.card{
+      position:relative;display:flex;flex-direction:column;gap:12px;
+      text-decoration:none;color:inherit;
+      background:linear-gradient(160deg,var(--card),var(--card2));
+      border:1px solid var(--line);border-radius:20px;padding:26px 26px 24px;
+      transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+      overflow:hidden;
+    }
+    a.card::after{
+      content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;
+      background:linear-gradient(160deg,transparent 60%,rgba(139,92,246,.10));
+      opacity:0;transition:opacity .18s ease;
+    }
+    a.card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.55);
+      box-shadow:0 18px 50px -22px rgba(109,40,217,.9)}
+    a.card:hover::after{opacity:1}
+
+    .tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase}
+    .tag.free{color:#34D399}
+    .tag.paid{color:var(--pink)}
+    .tag.over{color:var(--cyan)}
+    .dot{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 10px 1px currentColor}
+
+    .num{font-size:13px;font-weight:800;color:var(--violet);letter-spacing:.16em}
+    .card h2{font-size:22px;font-weight:800;letter-spacing:-.01em}
+    .feature h2{font-size:clamp(24px,3.4vw,32px)}
+    .card p{font-size:14.5px;color:var(--muted);line-height:1.55}
+    .go{margin-top:auto;display:inline-flex;align-items:center;gap:8px;
+      font-size:13.5px;font-weight:700;color:#CDBBFF}
+    .go svg{transition:transform .18s ease}
+    a.card:hover .go svg{transform:translateX(4px)}
+
+    .foot{margin-top:52px;color:var(--muted);font-size:13px;text-align:center;
+      border-top:1px solid var(--line);padding-top:22px;width:100%;max-width:1080px}
+    .foot b{color:#D9CDFF}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="eyebrow">Zaidronic · Master Class</span>
+    <h1>The Claude Operator<br>Master Class</h1>
+    <p class="lede">Learn the whole Claude toolkit — Chat, Design, and Code — and make AI do the work for you. No coding. You direct; Claude builds.</p>
+    <p class="ar">من الصفر إلى مشغّل احترافي لـ Claude.</p>
+
+    <div class="grid">
+
+      <a class="card feature" href="/claude-operator-pitch">
+        <span class="tag over"><span class="dot"></span>Start here · Overview</span>
+        <h2>The Claude Operator — The Pitch</h2>
+        <p>The big picture in a few minutes: what you'll be able to build, how the three tools fit together, and where this Master Class takes you.</p>
+        <span class="go">Open the pitch
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <a class="card" href="/claude-operator-master-class/foundation">
+        <span class="num">FOUNDATION</span>
+        <span class="tag free"><span class="dot"></span>Free</span>
+        <h2>Set Up Your AI Team</h2>
+        <p>Talk to Claude the right way, set up your workspace, and finish your first real task — your way.</p>
+        <span class="go">Open deck
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <a class="card" href="/claude-operator-master-class/part-1-chat">
+        <span class="num">PART 1</span>
+        <span class="tag paid"><span class="dot"></span>Free hook · then Paid</span>
+        <h2>Claude Chat</h2>
+        <p>Your daily workhorse. Get real results fast, work with your own files, build things you reuse, and run a whole job like a team.</p>
+        <span class="go">Open deck
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <a class="card" href="/claude-operator-master-class/part-2-design">
+        <span class="num">PART 2</span>
+        <span class="tag paid"><span class="dot"></span>Free hook · then Paid</span>
+        <h2>Claude Design</h2>
+        <p>Bring visual ideas to life. Product images, ads, and full campaigns — built and refined by chat, then collected into a portfolio.</p>
+        <span class="go">Open deck
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <a class="card" href="/claude-operator-master-class/part-3-code">
+        <span class="num">PART 3</span>
+        <span class="tag paid"><span class="dot"></span>Free hooks · then Paid</span>
+        <h2>Claude Code</h2>
+        <p>Automate and build. Claude works on your computer — organizes files, builds real projects, connects your tools, and ships them live.</p>
+        <span class="go">Open deck
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+    </div>
+
+    <div class="foot">
+      <b>The Claude Operator Master Class</b> — by Zaid Sarhan · Zaidronic. &nbsp;Press <b>P</b> inside any deck to present full screen.
+    </div>
+  </div>
+</body>
+</html>
