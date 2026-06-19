@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <title>The Claude Operator</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #06041A; overflow: hidden; }
+
+    #deck {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #present-btn {
+      position: fixed;
+      top: 14px;
+      right: 16px;
+      z-index: 9999;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, opacity 0.15s;
+      letter-spacing: 0.03em;
+    }
+    #present-btn:hover { background: rgba(255,255,255,0.22); }
+
+    /* hide button in true fullscreen */
+    :fullscreen #present-btn,
+    :-webkit-full-screen #present-btn { display: none; }
+  </style>
+</head>
+<body>
+
+  <iframe
+    id="deck"
+    src="/claude-operator-pitch/deck.html"
+    allowfullscreen
+    allow="fullscreen"
+    title="The Claude Operator deck"
+  ></iframe>
+
+  <button id="present-btn" title="Enter present mode (P)">Present</button>
+
+  <script>
+    (function () {
+      var deck = document.getElementById('deck');
+      var btn  = document.getElementById('present-btn');
+      var presenting = false;
+
+      // Focus iframe on load so arrow keys reach it immediately
+      deck.addEventListener('load', function () {
+        deck.contentWindow.focus();
+      });
+
+      function enterPresent() {
+        presenting = true;
+        btn.textContent = 'Exit';
+
+        // Tell the deck to hide its slide rail / nav chrome
+        try {
+          deck.contentWindow.postMessage({ __omelette_presenting: true }, '*');
+        } catch (e) {}
+
+        // Go fullscreen on the iframe element itself
+        var el = deck;
+        try {
+          if (el.requestFullscreen) {
+            el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          }
+        } catch (e) {}
+
+        deck.contentWindow.focus();
+      }
+
+      function exitPresent() {
+        presenting = false;
+        btn.textContent = 'Present';
+
+        // Tell the deck to restore its nav chrome
+        try {
+          deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
+        } catch (e) {}
+
+        // Exit fullscreen if active
+        try {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        } catch (e) {}
+
+        deck.contentWindow.focus();
+      }
+
+      btn.addEventListener('click', function () {
+        if (presenting) {
+          exitPresent();
+        } else {
+          enterPresent();
+        }
+      });
+
+      // P key to enter present mode
+      document.addEventListener('keydown', function (e) {
+        if (e.target === deck) return; // let deck handle it when focused
+        if ((e.key === 'p' || e.key === 'P') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          if (!presenting) enterPresent();
+          e.preventDefault();
+        }
+        if (e.key === 'Escape' && presenting) {
+          exitPresent();
+          e.preventDefault();
+        }
+      });
+
+      // Sync presenting state when fullscreen exits via Esc
+      document.addEventListener('fullscreenchange', function () {
+        if (!document.fullscreenElement && presenting) {
+          presenting = false;
+          btn.textContent = 'Present';
+          try {
+            deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
+          } catch (e) {}
+          deck.contentWindow.focus();
+        }
+      });
+      document.addEventListener('webkitfullscreenchange', function () {
+        if (!document.webkitFullscreenElement && presenting) {
+          presenting = false;
+          btn.textContent = 'Present';
+          try {
+            deck.contentWindow.postMessage({ __omelette_presenting: false }, '*');
+          } catch (e) {}
+          deck.contentWindow.focus();
+        }
+      });
+
+      // Re-focus iframe on click so arrow keys keep reaching it
+      document.addEventListener('click', function (e) {
+        if (e.target !== btn) {
+          deck.contentWindow.focus();
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

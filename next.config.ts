@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
       beforeFiles: [],
       // afterFiles: checked after filesystem routes (existing aliases)
       afterFiles: [
+        // /claude-operator-pitch → static HTML wrapper (URL stays /claude-operator-pitch)
+        {
+          source: "/claude-operator-pitch",
+          destination: "/claude-operator-pitch/index.html",
+        },
         // /ai-videos → /lp/a  (URL stays /ai-videos)
         {
           source: "/ai-videos",
