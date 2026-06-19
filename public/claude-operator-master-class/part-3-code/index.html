@@ -91,6 +91,19 @@
         if (isInteractive(e)) return;
         deckPrev();
       }
+      // Mouse-wheel / trackpad: scroll down = next, scroll up = previous (throttled so one
+      // gesture moves one slide, not ten). Only while presenting.
+      var lastWheel = 0;
+      function onDeckWheel(e) {
+        if (!presenting) return;
+        var dy = e.deltaY;
+        if (Math.abs(dy) < 8) return;           // ignore tiny jitters
+        e.preventDefault();                      // don't let the page scroll
+        var now = (e.timeStamp || 0);
+        if (now - lastWheel < 380) return;       // cooldown between slide moves
+        lastWheel = now;
+        if (dy > 0) deckNext(); else deckPrev();
+      }
       function wireDeckClicks() {
         try {
           var d = deck.contentDocument || deck.contentWindow.document;
@@ -98,6 +111,8 @@
           d.addEventListener('click', onDeckClick, true);
           d.removeEventListener('contextmenu', onDeckContextMenu, true);
           d.addEventListener('contextmenu', onDeckContextMenu, true);
+          d.removeEventListener('wheel', onDeckWheel, { capture: true });
+          d.addEventListener('wheel', onDeckWheel, { capture: true, passive: false });
         } catch (e) {}
       }
       deck.addEventListener('load', function () { wireDeckClicks(); deck.contentWindow.focus(); });
@@ -138,6 +153,8 @@
         e.preventDefault();
         if (e.target !== btn) deckPrev();
       });
+      // Wrapper-level scroll (over iframe edges) = next/prev while presenting, same throttle.
+      document.addEventListener('wheel', onDeckWheel, { passive: false });
     })();
   </script>
 </body>
