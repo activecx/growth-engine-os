@@ -35,3 +35,6 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 .env*.local
+
+# Large video assets (served from Vercel Blob)
+public/topk/vsl.mp4
