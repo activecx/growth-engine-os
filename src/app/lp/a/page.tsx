@@ -614,9 +614,11 @@ export default function LpAPage() {
     const v = videoRef.current;
     if (!v) return;
     setVslPlaying(true);
-    // Set src lazily on first click (click-to-load: avoids fetching 59 MB on page load)
+    // Set src lazily on first click (click-to-load: avoids fetching on page load)
+    // Served from Vercel Blob — removed from git tree
+    const VSL_BLOB_URL = 'https://baoclff3qakmcyff.public.blob.vercel-storage.com/topk/vsl.mp4';
     if (!v.src || !v.src.includes('vsl.mp4')) {
-      v.src = '/topk/vsl.mp4';
+      v.src = VSL_BLOB_URL;
       v.load();
     }
     void v.play();
