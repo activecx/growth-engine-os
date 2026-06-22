@@ -6,7 +6,16 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [],
+      // beforeFiles: run BEFORE filesystem routes, so this overrides the root
+      // page.tsx. The homepage (lp.topk.agency/) now serves the AI-videos VSL
+      // funnel (/lp/a). The old services page at src/app/page.tsx is kept in the
+      // repo but no longer shown at root. URL stays a clean "/".
+      beforeFiles: [
+        {
+          source: "/",
+          destination: "/lp/a",
+        },
+      ],
       // afterFiles: checked after filesystem routes (existing aliases)
       afterFiles: [
         // /claude-operator-pitch → static HTML wrapper (URL stays /claude-operator-pitch)
