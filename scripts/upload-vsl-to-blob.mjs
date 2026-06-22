@@ -28,6 +28,7 @@ const blob = await put('topk/vsl.mp4', fileBuffer, {
   contentType: 'video/mp4',
   token: process.env.BLOB_READ_WRITE_TOKEN,
   addRandomSuffix: false,
+  allowOverwrite: true, // replace the existing VSL at the same URL (intended)
 });
 
 console.log('');
